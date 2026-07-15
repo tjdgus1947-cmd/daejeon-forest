@@ -29,15 +29,14 @@ const verifiedPassword = ref("");
 const passwordModalRef = ref(null);
 
 async function loadForEdit() {
-  const { data } = await client.get(`/api/posts/${props.id}`);
-  category.value = data.category;
+  const { data } = await client.get(`/api/boards/${props.id}`);
   title.value = data.title;
   content.value = data.content;
 }
 
 async function handleVerify(pw) {
   try {
-    await client.post(`/api/posts/${props.id}/verify`, { password: pw });
+    await client.post(`/api/boards/${props.id}/verify`, { board_password: pw });
     verifiedPassword.value = pw;
     verifying.value = false;
     await loadForEdit();
@@ -60,23 +59,22 @@ async function submit() {
   errorMsg.value = "";
   try {
     if (isEdit.value) {
-      await client.put(`/api/posts/${props.id}`, {
-        title: title.value,
-        content: content.value,
-        password: verifiedPassword.value,
-      });
-      router.push({ name: "post-detail", params: { gu: props.gu, id: props.id } });
-    } else {
-      const { data } = await client.post("/api/posts", {
-        gu: props.gu,
-        category: category.value,
-        title: title.value,
-        content: content.value,
-        password: password.value,
-        nickname: nickname.value.trim() || "익명",
-      });
-      router.push({ name: "post-detail", params: { gu: props.gu, id: data.id } });
-    }
+    await client.put(`/api/boards/${props.id}`, {
+      title: title.value,
+      content: content.value,
+      board_password: verifiedPassword.value,
+    });
+    router.push({ name: "post-detail", params: { gu: props.gu, id: props.id } });
+  } else {
+    const { data } = await client.post("/api/boards", {
+      gu: props.gu,
+      title: title.value,
+      content: content.value,
+      board_password: password.value,
+      writer: nickname.value.trim() || "익명",
+    });
+    router.push({ name: "post-detail", params: { gu: props.gu, id: data.board_id } });
+  }
   } catch (e) {
     errorMsg.value = "저장에 실패했어요. 잠시 후 다시 시도해주세요.";
   } finally {

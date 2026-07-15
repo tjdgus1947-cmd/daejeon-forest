@@ -1,6 +1,6 @@
 """
 챗봇 API (RFP III-3)
-- POST /api/chat: 제공 JSON(=DB에 적재된 locations/posts) 기반 자연어 지역 정보 질의응답
+- POST /api/chat: 제공 JSON(=DB에 적재된 locations/boards) 기반 자연어 지역 정보 질의응답
 - 주요 질의 유형: 관광지/맛집 추천, 축제 일정, 모범음식점 위치, 커뮤니티 게시글 검색
 - 정확한 최신 데이터 답변을 위해 "DB 검색 결과를 컨텍스트로 넣고 LLM이 자연어로 정리"하는
   간단한 RAG(검색 증강 생성) 구조를 사용한다. (임베딩 없이 키워드 매칭으로 단순화 — 3일 일정 고려)
@@ -17,6 +17,15 @@ from app import models, schemas
 router = APIRouter(prefix="/api/chat", tags=["chat"])
 
 _client: OpenAI | None = None
+
+# TourAPI contenttypeid 코드 -> 한글 키워드 매핑 (실제 데이터 값 확인 후 조정 필요)
+CATEGORY_MAP = {
+    "맛집": "39", "밥집": "39", "식당": "39",
+    "축제": "15", "행사": "15",
+    "숙소": "32", "호텔": "32",
+    "놀거리": "28", "액티비티": "28",
+    "구경": "12", "여행": "12",
+}
 
 
 def get_openai_client() -> OpenAI:
@@ -39,32 +48,24 @@ SYSTEM_PROMPT = """당신은 '모여라 대전의 숲' 서비스의 지역 정�
 
 
 def _search_locations(db: Session, query: str, limit: int = 5):
-    """아주 단순한 키워드 기반 검색 (title/addr/category에 매칭)"""
+    """아주 단순한 키워드 기반 검색 (title/addr1/contenttypeid에 매칭)"""
     like = f"%{query}%"
     results = (
         db.query(models.Location)
         .filter(
             (models.Location.title.like(like))
-            | (models.Location.addr.like(like))
-            | (models.Location.category.like(like))
+            | (models.Location.addr1.like(like))
         )
         .limit(limit)
         .all()
     )
-    # 매칭이 없으면 카테고리 키워드로 폭넓게 재시도 (예: "맛집" -> "음식점")
+    # 매칭이 없으면 카테고리 키워드로 폭넓게 재시도 (예: "맛집" -> contenttypeid "39")
     if not results:
-        keyword_map = {
-            "맛집": "음식점", "밥집": "음식점", "식당": "음식점",
-            "축제": "축제공연행사", "행사": "축제공연행사",
-            "숙소": "숙박", "호텔": "숙박",
-            "놀거리": "레포츠", "액티비티": "레포츠",
-            "구경": "관광지", "여행": "관광지",
-        }
-        for kw, cat in keyword_map.items():
+        for kw, code in CATEGORY_MAP.items():
             if kw in query:
                 results = (
                     db.query(models.Location)
-                    .filter(models.Location.category == cat)
+                    .filter(models.Location.contenttypeid == code)
                     .limit(limit)
                     .all()
                 )
@@ -72,28 +73,28 @@ def _search_locations(db: Session, query: str, limit: int = 5):
     return results
 
 
-def _search_posts(db: Session, query: str, limit: int = 5):
+def _search_boards(db: Session, query: str, limit: int = 5):
     """커뮤니티 게시글 검색 (RFP III-3-나 '커뮤니티 게시글 검색' 대응)"""
     like = f"%{query}%"
     return (
-        db.query(models.Post)
-        .filter((models.Post.title.like(like)) | (models.Post.content.like(like)))
-        .order_by(models.Post.created_at.desc())
+        db.query(models.Board)
+        .filter((models.Board.title.like(like)) | (models.Board.content.like(like)))
+        .order_by(models.Board.created_at.desc())
         .limit(limit)
         .all()
     )
 
 
-def _build_context(locations, posts) -> str:
+def _build_context(locations, boards) -> str:
     lines = []
     if locations:
         lines.append("[장소 정보]")
         for loc in locations:
-            lines.append(f"- {loc.title} | {loc.category} | {loc.addr} | 전화: {loc.tel or '정보없음'}")
-    if posts:
+            lines.append(f"- {loc.title} | {loc.addr1} | 전화: {loc.tel or '정보없음'}")
+    if boards:
         lines.append("[관련 게시글]")
-        for p in posts:
-            lines.append(f"- 제목: {p.title} / 내용요약: {p.content[:60]}")
+        for b in boards:
+            lines.append(f"- 제목: {b.title} / 내용요약: {b.content[:60]}")
     if not lines:
         lines.append("검색된 데이터가 없습니다. 사용자에게 다른 키워드로 질문해달라고 안내하세요.")
     return "\n".join(lines)
@@ -102,12 +103,11 @@ def _build_context(locations, posts) -> str:
 @router.post("", response_model=schemas.ChatResponse)
 def chat(payload: schemas.ChatRequest, db: Session = Depends(get_db)):
     locations = _search_locations(db, payload.message)
-    posts = _search_posts(db, payload.message)
-    context = _build_context(locations, posts)
+    boards = _search_boards(db, payload.message)
+    context = _build_context(locations, boards)
 
     messages = [{"role": "system", "content": SYSTEM_PROMPT}]
-    # 대화 히스토리 유지 (RFP III-3-다)
-    messages.extend(payload.history[-6:])  # 최근 6턴만 유지 (토큰/비용 관리)
+    messages.extend(payload.history[-6:])
     messages.append(
         {
             "role": "user",
@@ -121,7 +121,7 @@ def chat(payload: schemas.ChatRequest, db: Session = Depends(get_db)):
         raise HTTPException(status_code=500, detail=str(e))
 
     response = client.chat.completions.create(
-        model="gpt-4o-mini",  # 비용 절감을 위해 mini 모델 사용 (예산 제약, RFP II-2)
+        model="gpt-4o-mini",
         messages=messages,
         temperature=0.3,
         max_tokens=400,

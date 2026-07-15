@@ -7,68 +7,68 @@ from typing import Optional, List
 from pydantic import BaseModel, Field
 
 
-# ---------- Post ----------
-class PostCreate(BaseModel):
+# ---------- Board ----------
+class BoardCreate(BaseModel):
     gu: str = Field(..., examples=["유성구"])
-    category: str = Field(default="자유")
+    location_id: Optional[int] = None
     title: str
     content: str
-    password: str = Field(..., min_length=4, description="수정/삭제용 비밀번호 (평문)")
-    nickname: str = Field(default="익명")
+    board_password: str = Field(..., min_length=4, description="수정/삭제용 비밀번호 (평문)")
+    writer: str = Field(default="익명")
 
 
-class PostUpdate(BaseModel):
+class BoardUpdate(BaseModel):
     title: Optional[str] = None
     content: Optional[str] = None
-    password: str  # 수정 시에도 기존 비밀번호 확인 필요
+    board_password: str  # 수정 시에도 기존 비밀번호 확인 필요
 
 
-class PostDelete(BaseModel):
-    password: str
+class BoardDelete(BaseModel):
+    board_password: str
 
 
-class PostVerify(BaseModel):
+class BoardVerify(BaseModel):
     """게시글 수정/삭제 전 비밀번호 확인용"""
-    password: str
+    board_password: str
 
 
 class CommentCreate(BaseModel):
     content: str
-    nickname: str = Field(default="익명")
+    writer: str = Field(default="익명")
+    comment_password: str = Field(..., min_length=4, description="댓글 수정/삭제용 비밀번호")
 
 
 class CommentOut(BaseModel):
-    id: int
+    comment_id: int
     content: str
-    nickname: str
+    writer: str
     created_at: datetime
 
     class Config:
         from_attributes = True
 
 
-class PostListOut(BaseModel):
+class BoardListOut(BaseModel):
     """목록 조회 시에는 비밀번호/본문 노출 안 함"""
-    id: int
+    board_id: int
     gu: str
-    category: str
     title: str
-    nickname: str
-    views: int
+    writer: str
+    view_count: int
     created_at: datetime
 
     class Config:
         from_attributes = True
 
 
-class PostDetailOut(BaseModel):
-    id: int
+class BoardDetailOut(BaseModel):
+    board_id: int
     gu: str
-    category: str
+    location_id: Optional[int] = None
     title: str
     content: str
-    nickname: str
-    views: int
+    writer: str
+    view_count: int
     created_at: datetime
     updated_at: datetime
     comments: List[CommentOut] = []
@@ -79,16 +79,16 @@ class PostDetailOut(BaseModel):
 
 # ---------- Location ----------
 class LocationOut(BaseModel):
-    id: int
+    location_id: int
     contentid: str
-    category: str
-    gu: str
+    contenttypeid: Optional[str] = None
+    gu: Optional[str] = None
     title: str
-    addr: str
+    addr1: str
     tel: Optional[str] = None
-    mapx: Optional[str] = None
-    mapy: Optional[str] = None
-    image_url: Optional[str] = None
+    mapx: Optional[float] = None
+    mapy: Optional[float] = None
+    firstimage: Optional[str] = None
 
     class Config:
         from_attributes = True
@@ -102,3 +102,10 @@ class ChatRequest(BaseModel):
 
 class ChatResponse(BaseModel):
     reply: str
+
+class CommentUpdate(BaseModel):
+    content: str
+    comment_password: str
+
+class CommentDelete(BaseModel):
+    comment_password: str

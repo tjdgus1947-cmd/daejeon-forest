@@ -6,9 +6,10 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.database import Base, engine
-from app.routers import posts, locations, chat
+from app.routers import board, locations, chat
 
-# 최초 실행 시 테이블 자동 생성 (SQLite 파일 기반, 별도 서버/마이그레이션 불필요)
+# PostgreSQL 사용 (은아 DB). 테이블은 이미 01_create_tables.sql로 생성되어 있으므로
+# create_all은 누락된 테이블만 보완 생성하는 역할 (기존 테이블/데이터는 영향 없음)
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
@@ -26,7 +27,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(posts.router)
+app.include_router(board.router)
 app.include_router(locations.router)
 app.include_router(chat.router)
 

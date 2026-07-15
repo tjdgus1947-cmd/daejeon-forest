@@ -22,15 +22,15 @@ const locations = ref([]);
 const loading = ref(false);
 const errorMsg = ref("");
 
-const CATEGORY_HEX_COLORS = {
-  "관광지": "#3B82F6",
-  "문화시설": "#A855F7",
-  "축제공연행사": "#F59E0B",
-  "여행코스": "#10B981",
-  "레포츠": "#059669",
-  "숙박": "#EF4444",
-  "쇼핑": "#EC4899",
-  "음식점": "#DC2626"
+// 💡 백엔드 공공데이터 분류 코드(contenttypeid)를 프론트엔드 한글 카테고리로 변환하는 매핑 테이블
+const CODE_TO_CATEGORY = {
+  "12": "관광지",
+  "14": "문화시설",
+  "15": "축제공연행사",
+  "28": "레포츠",
+  "32": "숙박",
+  "38": "쇼핑",
+  "39": "음식점"
 };
 
 function kakaoSearchUrl(title, addr) {
@@ -39,7 +39,7 @@ function kakaoSearchUrl(title, addr) {
 }
 
 function resolvedColor(category) {
-  return CATEGORY_HEX_COLORS[category] || "#6b9080"; 
+  return categoryColor(category) || "#6b9080"; 
 }
 
 // 특정 좌표가 폴리곤 내부인지 판단 (Ray-Casting 알고리즘)
@@ -115,6 +115,7 @@ async function drawBoundaries() {
         }
       });
 
+      // 마우스 아웃
       kakao.maps.event.addListener(polygon, 'mouseout', () => {
         if (name !== props.gu) {
           polygon.setOptions({
@@ -125,6 +126,7 @@ async function drawBoundaries() {
         }
       });
 
+      // 클릭 시 해당 구로 이동
       kakao.maps.event.addListener(polygon, 'click', () => {
         if (name !== props.gu) {
           router.push({ name: 'district', params: { gu: name } });
@@ -142,10 +144,11 @@ function renderMarkers() {
   if (!map) return;
   clearMarkers();
 
-  // 사용자가 선택해서 activeCategories Set에 추가된 카테고리 핀만 필터링해서 그립니다!
-  const filtered = locations.value.filter((loc) =>
-    activeCategories.value.has(loc.category)
-  );
+  // 💡 [수정 완료] locations 안의 contenttypeid를 한글 카테고리로 매핑해서 사용자가 켠 카테고리만 필터링합니다.
+  const filtered = locations.value.filter((loc) => {
+    const hangulCategory = CODE_TO_CATEGORY[loc.contenttypeid] || "기타";
+    return activeCategories.value.has(hangulCategory);
+  });
 
   const activePolygonWrap = polygons.value.find(p => p.guName === props.gu);
 
@@ -160,7 +163,9 @@ function renderMarkers() {
       if (!isInside) return;
     }
 
-    const pinColor = resolvedColor(loc.category);
+    // 💡 [수정 완료] contenttypeid에 맞춰 핀 색상을 결정합니다.
+    const hangulCategory = CODE_TO_CATEGORY[loc.contenttypeid] || "기타";
+    const pinColor = resolvedColor(hangulCategory);
     const position = new kakao.maps.LatLng(lat, lng);
 
     const markerContent = document.createElement('div');
@@ -183,8 +188,9 @@ function renderMarkers() {
     customMarker.setMap(map);
     currentMarkers.push(customMarker);
 
-    const img = loc.image_url
-      ? `<img src="${loc.image_url}" alt="${loc.title}" style="width:100%; max-height:100px; object-fit:cover; border-radius:6px; margin-bottom:6px;" />`
+    // 💡 [수정 완료] schemas.py에 정의된 firstimage 변수명으로 변경했습니다.
+    const img = loc.firstimage
+      ? `<img src="${loc.firstimage}" alt="${loc.title}" style="width:100%; max-height:100px; object-fit:cover; border-radius:6px; margin-bottom:6px;" />`
       : "";
 
     const overlayContent = document.createElement('div');
@@ -204,14 +210,16 @@ function renderMarkers() {
       z-index: 10;
       display: none;
     `;
+    
+    // 💡 [수정 완료] 주소 필드를 schemas.py 규격에 맞게 loc.addr1로 변경했습니다.
     overlayContent.innerHTML = `
       <div style="position:relative;">
         <button class="close-btn" style="position:absolute; top:-4px; right:-2px; background:none; border:none; font-size:14px; cursor:pointer; color:#999;">×</button>
         ${img}
         <strong style="font-size:13px; display:block; margin-bottom:2px;">${loc.title}</strong>
-        <span style="color:${pinColor}; font-weight:600; font-size:11px; display:block; margin-bottom:2px;">${loc.category}</span>
-        <span style="font-size:11px; color:#666; display:block; margin-bottom:2px;">${loc.addr || "주소 정보 없음"}</span>
-        <a href="${kakaoSearchUrl(loc.title, loc.addr)}" target="_blank" rel="noopener"
+        <span style="color:${pinColor}; font-weight:600; font-size:11px; display:block; margin-bottom:2px;">${hangulCategory}</span>
+        <span style="font-size:11px; color:#666; display:block; margin-bottom:2px;">${loc.addr1 || "주소 정보 없음"}</span>
+        <a href="${kakaoSearchUrl(loc.title, loc.addr1)}" target="_blank" rel="noopener"
            style="font-size:11px; color:#2f5233; font-weight:600; text-decoration:none; display:inline-block; margin-top:4px;">
           카카오맵에서 상세보기 →
         </a>
@@ -276,6 +284,10 @@ onMounted(async () => {
     };
     
     map = new kakao.maps.Map(container, options);
+    
+    kakao.maps.event.addListener(map, 'click', () => {
+      document.querySelectorAll('.kakaomap-popup').forEach(el => el.style.display = 'none');
+    });
     
     await drawBoundaries();
     await fetchLocations();
