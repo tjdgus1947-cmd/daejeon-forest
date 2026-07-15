@@ -27,22 +27,10 @@ const CODE_TO_CATEGORY = {
   "12": "관광지",
   "14": "문화시설",
   "15": "축제공연행사",
-  "25": "여행코스",
   "28": "레포츠",
   "32": "숙박",
   "38": "쇼핑",
   "39": "음식점"
-};
-
-const CATEGORY_HEX_COLORS = {
-  "관광지": "#3B82F6",
-  "문화시설": "#A855F7",
-  "축제공연행사": "#F59E0B",
-  "여행코스": "#10B981",
-  "레포츠": "#059669",
-  "숙박": "#EF4444",
-  "쇼핑": "#EC4899",
-  "음식점": "#DC2626"
 };
 
 function kakaoSearchUrl(title, addr) {
@@ -51,7 +39,7 @@ function kakaoSearchUrl(title, addr) {
 }
 
 function resolvedColor(category) {
-  return CATEGORY_HEX_COLORS[category] || "#6b9080"; 
+  return categoryColor(category) || "#6b9080"; 
 }
 
 // 특정 좌표가 폴리곤 내부인지 판단 (Ray-Casting 알고리즘)
@@ -296,6 +284,10 @@ onMounted(async () => {
     };
     
     map = new kakao.maps.Map(container, options);
+    
+    kakao.maps.event.addListener(map, 'click', () => {
+      document.querySelectorAll('.kakaomap-popup').forEach(el => el.style.display = 'none');
+    });
     
     await drawBoundaries();
     await fetchLocations();

@@ -102,3 +102,10 @@ class ChatRequest(BaseModel):
 
 class ChatResponse(BaseModel):
     reply: str
+
+class CommentUpdate(BaseModel):
+    content: str
+    comment_password: str
+
+class CommentDelete(BaseModel):
+    comment_password: str

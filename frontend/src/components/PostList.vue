@@ -105,7 +105,7 @@ onMounted(fetchPosts);
       <tbody>
         <tr v-for="p in posts" :key="p.board_id" @click="goDetail(p.board_id)">
           <td class="col-tag">
-            <span class="tag-badge">{{ p.category }}</span>
+           <span class="tag-badge">{{ p.category }}</span>
           </td>
           <td class="title-cell">{{ p.title }}</td>
           <td>{{ p.writer }}</td>

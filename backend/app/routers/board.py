@@ -106,3 +106,57 @@ def create_comment(board_id: int, payload: schemas.CommentCreate, db: Session = 
     db.commit()
     db.refresh(comment)
     return comment
+
+@router.put("/{board_id}/comments/{comment_id}", response_model=schemas.CommentOut)
+def update_comment(
+    board_id: int, 
+    comment_id: int, 
+    payload: schemas.CommentUpdate, 
+    db: Session = Depends(get_db)
+):
+    """댓글 수정 (비밀번호 일치 시에만)"""
+    # 1. 해당 댓글이 존재하는지 확인
+    comment = db.query(models.Comment).filter(
+        models.Comment.comment_id == comment_id,
+        models.Comment.board_id == board_id
+    ).first()
+    
+    if not comment:
+        raise HTTPException(status_code=404, detail="댓글을 찾을 수 없습니다.")
+        
+    # 2. 비밀번호 평문 비교 검증
+    if comment.comment_password != payload.comment_password:
+        raise HTTPException(status_code=403, detail="비밀번호가 일치하지 않습니다.")
+        
+    # 3. 내용 업데이트 및 저장
+    comment.content = payload.content
+    db.commit()
+    db.refresh(comment)
+    return comment
+
+
+@router.delete("/{board_id}/comments/{comment_id}", status_code=204)
+def delete_comment(
+    board_id: int, 
+    comment_id: int, 
+    payload: schemas.CommentDelete, 
+    db: Session = Depends(get_db)
+):
+    """댓글 삭제 (비밀번호 일치 시에만)"""
+    # 1. 해당 댓글이 존재하는지 확인
+    comment = db.query(models.Comment).filter(
+        models.Comment.comment_id == comment_id,
+        models.Comment.board_id == board_id
+    ).first()
+    
+    if not comment:
+        raise HTTPException(status_code=404, detail="댓글을 찾을 수 없습니다.")
+        
+    # 2. 비밀번호 평문 비교 검증
+    if comment.comment_password != payload.comment_password:
+        raise HTTPException(status_code=403, detail="비밀번호가 일치하지 않습니다.")
+        
+    # 3. 데이터베이스에서 삭제
+    db.delete(comment)
+    db.commit()
+    return None
