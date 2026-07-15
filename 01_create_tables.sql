@@ -66,7 +66,30 @@ CREATE TABLE comment (
         ON DELETE CASCADE
 );
 
+
+-- ============================================
+-- 챗봇(RAG)용 location 스냅샷 테이블 생성
+-- ============================================
+
+CREATE TABLE chatbot_location (
+    chatbot_location_id SERIAL PRIMARY KEY,
+    location_id INTEGER,
+    contentid VARCHAR(50),
+    contenttypeid VARCHAR(20),
+    title VARCHAR(255),
+    addr1 VARCHAR(255),
+    tel VARCHAR(50),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_chatbot_location
+        FOREIGN KEY (location_id)
+        REFERENCES location(location_id)
+        ON DELETE SET NULL
+);
+
+
 -- 4. 인덱스
 CREATE INDEX idx_board_location ON board(location_id);
 CREATE INDEX idx_comment_board ON comment(board_id);
 CREATE INDEX idx_board_created_at ON board(created_at DESC);
+CREATE INDEX idx_chatbot_location_contentid ON chatbot_location(contentid);
+CREATE INDEX idx_chatbot_location_location_id ON chatbot_location(location_id);
