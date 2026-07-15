@@ -64,7 +64,7 @@ onMounted(fetchPosts);
 
 <template>
   <div class="post-list">
-    <div class="tag-filter">
+    <div v-if="POST_CATEGORIES && POST_CATEGORIES.length > 0" class="tag-filter">
       <button
         v-for="cat in POST_CATEGORIES"
         :key="cat"
@@ -77,50 +77,64 @@ onMounted(fetchPosts);
     </div>
 
     <div class="toolbar">
-      <input
-        v-model="keyword"
-        type="text"
-        placeholder="게시글 검색어를 입력하세요"
-        @keyup.enter="search"
-      />
-      <button class="btn btn-ghost" @click="search">검색</button>
-      <button class="btn btn-primary" @click="goWrite">+ 글쓰기</button>
+      <div class="search-input-wrapper">
+        <span class="search-icon">🔍</span>
+        <input
+          v-model="keyword"
+          type="text"
+          placeholder="동네의 어떤 이야기가 궁금하신가요?"
+          @keyup.enter="search"
+        />
+      </div>
+      <button class="btn btn-ghost search-btn" @click="search">검색</button>
+      <button class="btn btn-primary" @click="goWrite">+ 새 글 쓰기</button>
     </div>
 
-    <div v-if="loading" class="empty">불러오는 중…</div>
+    <div v-if="loading" class="empty">
+      <div class="spinner"></div>
+      <p>숲에서 속삭임을 찾아내는 중…</p>
+    </div>
+    
     <div v-else-if="posts.length === 0" class="empty">
-      아직 이 구에 등록된 이야기가 없어요. 첫 글의 주인공이 되어보세요 🌱
+      <span class="empty-icon">🌱</span>
+      <p>아직 이 구에 등록된 이야기가 없어요.<br />동네의 따뜻한 소식을 먼저 들려주세요!</p>
     </div>
 
-    <table v-else class="post-table">
-      <thead>
-        <tr>
-          <th class="col-tag">말머리</th>
-          <th>제목</th>
-          <th>닉네임</th>
-          <th>조회</th>
-          <th>작성일</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr v-for="p in posts" :key="p.board_id" @click="goDetail(p.board_id)">
-          <td class="col-tag">
-           <span class="tag-badge">{{ p.category }}</span>
-          </td>
-          <td class="title-cell">{{ p.title }}</td>
-          <td>{{ p.writer }}</td>
-          <td>{{ p.view_count }}</td>
-          <td>{{ formatDate(p.created_at) }}</td>
-        </tr>
-      </tbody>
-    </table>
+    <div v-else class="table-container card">
+      <table class="post-table">
+        <thead>
+          <tr>
+            <th class="col-tag">말머리</th>
+            <th class="col-title">제목</th>
+            <th class="col-writer">작성자</th>
+            <th class="col-view">조회수</th>
+            <th class="col-date">작성일</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="p in posts" :key="p.board_id" @click="goDetail(p.board_id)">
+            <td class="col-tag">
+              <span class="tag-badge">{{ p.category || "잡담" }}</span>
+            </td>
+            <td class="title-cell">
+              <div class="title-wrapper">
+                <span class="title-text">{{ p.title }}</span>
+              </div>
+            </td>
+            <td class="writer-cell">{{ p.writer }}</td>
+            <td class="view-cell">{{ p.view_count }}</td>
+            <td class="date-cell">{{ formatDate(p.created_at) }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
 
     <div class="pager">
-      <button class="btn btn-ghost" :disabled="page === 1" @click="page--">
+      <button class="btn btn-ghost pager-btn" :disabled="page === 1" @click="page--">
         이전
       </button>
-      <span>{{ page }} 페이지</span>
-      <button class="btn btn-ghost" :disabled="!hasMore" @click="page++">
+      <span class="page-num">{{ page }} 페이지</span>
+      <button class="btn btn-ghost pager-btn" :disabled="!hasMore" @click="page++">
         다음
       </button>
     </div>
@@ -131,97 +145,223 @@ onMounted(fetchPosts);
 .post-list {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 20px;
 }
 
 .tag-filter {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: 8px;
 }
 
 .tag-chip {
-  padding: 6px 14px;
+  padding: 8px 16px;
   border-radius: 999px;
-  border: 1px solid var(--line);
+  border: 1.5px solid var(--line);
   background: var(--surface);
-  font-size: var(--text-xs);
+  font-size: var(--text-sm);
   color: var(--forest-700);
+  font-weight: 700;
+  transition: all 0.2s var(--ease-leaf);
+}
+
+.tag-chip:hover {
+  border-color: var(--forest-600);
+  background: var(--surface-alt);
 }
 
 .tag-chip.active {
   background: var(--forest-600);
   color: white;
   border-color: var(--forest-600);
+  box-shadow: 0 4px 12px rgba(37, 68, 42, 0.12);
 }
 
 .toolbar {
   display: flex;
-  gap: 8px;
+  gap: 10px;
+  align-items: center;
+}
+
+.search-input-wrapper {
+  position: relative;
+  flex: 1;
+}
+
+.search-icon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--moss-400);
+  font-size: 14px;
 }
 
 .toolbar input {
-  flex: 1;
-  padding: 10px 14px;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-sm);
+  width: 100%;
+  padding: 12px 14px 12px 38px;
+  border: 1.5px solid var(--line);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  box-shadow: inset 0 1px 2px rgba(18, 33, 22, 0.01);
+  transition: all 0.2s var(--ease-leaf);
+}
+
+.toolbar input:focus {
+  border-color: var(--moss-400);
+  box-shadow: 0 0 0 3px rgba(85, 123, 107, 0.12);
+}
+
+.search-btn {
+  padding: 12px 20px;
 }
 
 .empty {
-  padding: 48px 0;
+  padding: 64px 0;
   text-align: center;
   color: var(--moss-400);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.empty-icon {
+  font-size: 36px;
+}
+
+.empty p {
+  font-size: var(--text-sm);
+  line-height: 1.6;
+  font-weight: 500;
+  margin: 0;
+}
+
+.spinner {
+  width: 28px;
+  height: 28px;
+  border: 3px solid var(--line);
+  border-top-color: var(--forest-600);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* 🌿 리스트 테이블 카드 디자인화 */
+.table-container {
+  overflow-x: auto;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--line);
+  background: var(--surface);
+  box-shadow: var(--shadow-soft);
 }
 
 .post-table {
   width: 100%;
   border-collapse: collapse;
+  text-align: left;
 }
 
 .post-table th {
-  text-align: left;
   font-size: var(--text-xs);
   color: var(--moss-400);
-  border-bottom: 1px solid var(--line);
-  padding: 8px 4px;
-}
-
-.col-tag {
-  width: 84px;
+  font-weight: 700;
+  border-bottom: 1.5px solid var(--line);
+  padding: 14px 16px;
+  background: rgba(244, 247, 242, 0.4);
 }
 
 .post-table td {
-  padding: 12px 4px;
+  padding: 16px 16px;
   border-bottom: 1px solid var(--line);
   font-size: var(--text-sm);
+  color: var(--forest-700);
 }
 
 .post-table tr {
   cursor: pointer;
+  transition: background-color 0.18s var(--ease-leaf);
 }
 
 .post-table tr:hover td {
-  background: var(--surface-alt);
+  background: rgba(233, 240, 230, 0.45);
+}
+
+.post-table tr:last-child td {
+  border-bottom: none;
+}
+
+/* 열 넓이 가로 균형 매핑 */
+.col-tag { width: 100px; text-align: center; }
+.col-title { width: auto; }
+.col-writer { width: 120px; }
+.col-view { width: 80px; text-align: center; }
+.col-date { width: 110px; text-align: right; }
+
+.post-table td.col-tag {
+  text-align: center;
 }
 
 .tag-badge {
   font-size: var(--text-xs);
+  font-weight: 700;
   background: var(--surface-alt);
   color: var(--forest-700);
-  padding: 3px 8px;
+  padding: 4px 10px;
   border-radius: 999px;
+  display: inline-block;
 }
 
 .title-cell {
-  font-weight: 600;
+  font-weight: 700;
   color: var(--forest-900);
 }
 
+.title-text {
+  transition: color 0.15s var(--ease-leaf);
+}
+
+.post-table tr:hover .title-text {
+  color: var(--forest-600);
+}
+
+.writer-cell {
+  font-weight: 500;
+  color: var(--forest-700);
+}
+
+.view-cell {
+  text-align: center;
+  color: var(--moss-400);
+}
+
+.date-cell {
+  text-align: right;
+  color: var(--moss-400);
+  font-variant-numeric: tabular-nums;
+}
+
+/* 페이징 */
 .pager {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 16px;
+  gap: 20px;
+  margin-top: 12px;
+}
+
+.pager-btn {
+  padding: 8px 18px;
   font-size: var(--text-sm);
+  border-radius: var(--radius-sm);
+}
+
+.page-num {
+  font-size: var(--text-sm);
+  font-weight: 700;
+  color: var(--forest-900);
 }
 </style>

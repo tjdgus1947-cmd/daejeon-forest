@@ -16,8 +16,9 @@ body {
   color: var(--forest-900);
   font-family: var(--font-body);
   font-size: var(--text-base);
-  line-height: 1.6;
+  line-height: 1.625;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 h1,
@@ -31,20 +32,26 @@ h3 {
 
 a {
   color: inherit;
+  text-decoration: none;
+  transition: color 0.2s var(--ease-leaf);
 }
 
 button {
   font-family: inherit;
   cursor: pointer;
+  border: none;
+  outline: none;
 }
 
 input,
 textarea {
   font-family: inherit;
   font-size: var(--text-base);
+  outline: none;
+  transition: border-color 0.2s var(--ease-leaf), box-shadow 0.2s var(--ease-leaf);
 }
 
-/* 키보드 포커스 표시 — 접근성 */
+/* 🌿 접근성 높은 포커스 링 - 키보드 내비게이션 전용 */
 :focus-visible {
   outline: 2px solid var(--sun-500);
   outline-offset: 2px;
@@ -65,6 +72,7 @@ textarea {
   padding: 0 20px;
 }
 
+/* 버튼 컴포넌트 마이크로 모션 이펙트 */
 .btn {
   display: inline-flex;
   align-items: center;
@@ -72,14 +80,9 @@ textarea {
   gap: 6px;
   padding: 12px 22px;
   border-radius: var(--radius-md);
-  border: none;
   font-size: var(--text-base);
   font-weight: 600;
-  transition: transform 0.18s var(--ease-leaf), box-shadow 0.18s var(--ease-leaf);
-}
-
-.btn:active {
-  transform: translateY(1px);
+  transition: transform 0.25s var(--ease-leaf), box-shadow 0.25s var(--ease-leaf), background-color 0.2s var(--ease-leaf), color 0.2s var(--ease-leaf);
 }
 
 .btn-primary {
@@ -89,31 +92,58 @@ textarea {
 }
 
 .btn-primary:hover {
+  background: var(--forest-700);
+  transform: translateY(-1.5px); /* 미세하게 살포시 떠오르는 볼륨감 */
   box-shadow: var(--shadow-lift);
 }
 
+.btn-primary:active {
+  transform: translateY(0.5px); /* 클릭할 때 묵직하게 눌림 */
+  box-shadow: var(--shadow-active);
+}
+
 .btn-ghost {
-  background: transparent;
+  background: var(--surface);
   color: var(--forest-700);
-  border: 1px solid var(--line);
+  border: 1.5px solid var(--line);
 }
 
 .btn-ghost:hover {
   background: var(--surface-alt);
+  border-color: var(--forest-600);
+  color: var(--forest-900);
+  transform: translateY(-1px);
+}
+
+.btn-ghost:active {
+  transform: translateY(0px);
 }
 
 .btn-danger {
   background: var(--danger-bg);
   color: var(--danger);
+  border: 1.5px solid rgba(179, 63, 42, 0.15);
 }
 
+.btn-danger:hover {
+  background: #f8ded9;
+  transform: translateY(-1px);
+}
+
+.btn-danger:active {
+  transform: translateY(0px);
+}
+
+/* 카드 컴포넌트 고도화 */
 .card {
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-soft);
+  transition: transform 0.3s var(--ease-leaf), box-shadow 0.3s var(--ease-leaf);
 }
 
+/* 인풋 필드 UX 셰이핑 */
 .field {
   display: flex;
   flex-direction: column;
@@ -123,19 +153,29 @@ textarea {
 
 .field label {
   font-size: var(--text-sm);
-  font-weight: 600;
+  font-weight: 700;
   color: var(--forest-700);
+  letter-spacing: -0.01em;
 }
 
 .field input,
 .field textarea {
-  padding: 10px 14px;
-  border: 1px solid var(--line);
+  padding: 12px 16px;
+  border: 1.5px solid var(--line);
   border-radius: var(--radius-sm);
   background: var(--surface);
+  color: var(--forest-900);
+  box-shadow: inset 0 1px 2px rgba(18, 33, 22, 0.01);
 }
 
+/* 🌿 인풋에 포커스가 잡힐 때, 우아한 세이지 컬러 글로우 효과를 부여합니다. */
 .field input:focus,
 .field textarea:focus {
   border-color: var(--moss-400);
+  box-shadow: 0 0 0 3.5px rgba(85, 123, 107, 0.15);
+}
+
+.field input::placeholder,
+.field textarea::placeholder {
+  color: var(--line);
 }

@@ -1,5 +1,5 @@
 /*
-  디자인 토큰 — "모여라 대전의 숲" 브랜드 시스템
+  디자인 토큰 — "모여라 대전의 숲" 브랜드 시스템 (Remastered)
 
   컨셉: 대전의 다섯 개 구를 "다섯 그루의 나무가 이룬 숲"으로 표현.
   팔레트: 짙은 숲 그린(텍스트/브랜드) + 옅은 잎사귀 화이트(배경) + 볕뉘(햇살) 앰버 하나만 강조색으로.
@@ -8,28 +8,28 @@
 
 :root {
   /* Color */
-  --bg: #eff5ee;
+  --bg: #f4f7f2;               /* 🌿 조금 더 부드럽고 따뜻한 웜 그린-화이트 백그라운드 */
   --surface: #ffffff;
-  --surface-alt: #e4eee1;
-  --forest-900: #16281c;
-  --forest-700: #234431;
-  --forest-600: #2f5233;
-  --moss-400: #6b9080;
-  --sun-500: #e8a33d;
-  --sun-600: #cf8a26;
-  --line: #d3e0ce;
-  --danger: #c1533d;
-  --danger-bg: #fbeae6;
+  --surface-alt: #e9f0e6;      /* 차분한 에메랄드 톤 다운 */
+  --forest-900: #122116;       /* 텍스트 대비 향상을 위해 가독성 극대화된 딥 블랙-그린 */
+  --forest-700: #1b3524;
+  --forest-600: #25442a;       /* 숲 깊이감을 가진 클래식 포레스트 그린 */
+  --moss-400: #557b6b;         /* 대비율을 높여 텍스트 가독성을 확보한 모스 그린 */
+  --sun-500: #df9429;          /* 조금 더 또렷하고 고급스러운 볕뉘 골드-옐로우 */
+  --sun-600: #c17b1a;
+  --line: #dbe4d8;             /* 미세하게 흐르는 눈이 편한 경계선 색상 */
+  --danger: #b33f2a;           /* 경고 가독성 보완 */
+  --danger-bg: #fdf1ee;
 
   /* 카테고리 색상 (지도 핀 / 게시판 태그 공용) */
-  --cat-관광지: #2f5233;
-  --cat-문화시설: #4c6eaf;
-  --cat-축제공연행사: #e8a33d;
-  --cat-여행코스: #6b9080;
-  --cat-레포츠: #3e8e7e;
-  --cat-숙박: #8c5e58;
-  --cat-쇼핑: #b36a9c;
-  --cat-음식점: #c1533d;
+  --cat-관광지: #25442a;
+  --cat-문화시설: #45629c;
+  --cat-축제공연행사: #df9429;
+  --cat-여행코스: #557b6b;
+  --cat-레포츠: #317869;
+  --cat-숙박: #7b4f49;
+  --cat-쇼핑: #a15589;
+  --cat-음식점: #b33f2a;
 
   /* Typography */
   --font-display: "Noto Serif KR", serif;
@@ -47,9 +47,12 @@
   --radius-sm: 8px;
   --radius-md: 14px;
   --radius-lg: 24px;
-  --shadow-soft: 0 4px 20px rgba(22, 40, 28, 0.08);
-  --shadow-lift: 0 10px 30px rgba(22, 40, 28, 0.14);
+  
+  /* 🌿 부드럽게 흩뿌려진 입체감을 주는 그림자 설계 */
+  --shadow-soft: 0 4px 20px rgba(18, 33, 22, 0.04), 0 1px 4px rgba(18, 33, 22, 0.02);
+  --shadow-lift: 0 12px 28px rgba(18, 33, 22, 0.08), 0 2px 8px rgba(18, 33, 22, 0.04);
+  --shadow-active: 0 2px 4px rgba(18, 33, 22, 0.06);
 
   /* Motion */
-  --ease-leaf: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-leaf: cubic-bezier(0.16, 1, 0.3, 1); /* 자연스럽게 가속하고 멈추는 에디터 초이스 커브 */
 }

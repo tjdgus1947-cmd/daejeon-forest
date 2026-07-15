@@ -21,7 +21,7 @@ export const CATEGORIES = [
 ];
 
 /** 게시판 글의 말머리(카테고리). 장소 카테고리(CATEGORIES)와는 별개입니다. */
-export const POST_CATEGORIES = ["자유", "질문", "정보", "동네소식", "모임"];
+export const POST_CATEGORIES = [];
 
 export function categoryColor(category) {
   const map = {

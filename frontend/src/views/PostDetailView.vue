@@ -126,20 +126,20 @@ onMounted(load);
 </script>
 
 <template>
-  <main class="detail-page">
-    <div class="container" v-if="!loading && post">
+  <main class="detail-page animate-fade-in">
+    <div class="container container-sm" v-if="!loading && post">
       <button class="back-btn" @click="router.push({ name: 'district', params: { gu } })">
-        ← 목록으로
+        ← {{ gu }} 이야기 목록으로
       </button>
 
       <article class="card post-card">
-        <header>
-          <span class="meta">
-            <span>{{ post.writer }}</span>
-            <span>{{ formatDate(post.created_at) }}</span>
-            <span>조회 {{ post.view_count }}</span>
-          </span>
-          <h1>{{ post.title }}</h1>
+        <header class="post-header">
+          <div class="meta">
+            <span class="writer-tag">👤 {{ post.writer }}</span>
+            <span class="date-tag">{{ formatDate(post.created_at) }}</span>
+            <span class="view-tag">👀 조회 {{ post.view_count }}</span>
+          </div>
+          <h1 class="post-title">{{ post.title }}</h1>
         </header>
 
         <p class="content">{{ post.content }}</p>
@@ -153,44 +153,67 @@ onMounted(load);
       </article>
 
       <section class="comments card">
-        <h2>댓글 {{ post.comments.length }}</h2>
-        <ul>
-          <li v-for="c in post.comments" :key="c.comment_id" class="comment">
-            <div class="comment-content-wrap">
-              <strong>{{ c.writer }}</strong>
-              <span class="comment-body">{{ c.content }}</span>
-              <time>{{ formatDate(c.created_at) }}</time>
+        <div class="comments-header">
+          <h2 class="comments-title">💬 이웃들의 댓글 <span class="count">{{ post.comments.length }}</span></h2>
+        </div>
+        
+        <ul class="comment-list">
+          <li v-for="c in post.comments" :key="c.comment_id" class="comment-bubble-item">
+            <div class="avatar">🌳</div>
+            
+            <div class="bubble-content-area">
+              <div class="bubble-info">
+                <strong class="comment-writer">{{ c.writer }}</strong>
+                <time class="comment-time">{{ formatDate(c.created_at) }}</time>
+              </div>
+              
+              <div class="speech-bubble">
+                <span class="comment-body">{{ c.content }}</span>
+              </div>
+              
+              <div class="comment-actions">
+                <button class="action-link" @click="openCommentAction(c.comment_id, 'edit', c.content)">
+                  ✏️ 수정
+                </button>
+                <button class="action-link delete" @click="openCommentAction(c.comment_id, 'delete')">
+                  🗑️ 삭제
+                </button>
+              </div>
             </div>
-            <div class="comment-actions">
-              <button class="action-link" @click="openCommentAction(c.comment_id, 'edit', c.content)">수정</button>
-              <button class="action-link delete" @click="openCommentAction(c.comment_id, 'delete')">삭제</button>
-            </div>
+          </li>
+          
+          <li v-if="post.comments.length === 0" class="empty-comments">
+            아직 따뜻한 댓글이 없어요. 첫 마디를 건네보세요! 🌱
           </li>
         </ul>
 
-        <div class="comment-form">
-          <input
-            v-model="commentNickname"
-            type="text"
-            class="comment-nick"
-            placeholder="닉네임"
-            maxlength="12"
-          />
-          <input
-            v-model="commentPassword"
-            type="password"
-            class="comment-pass"
-            placeholder="비밀번호(4자 이상)"
-            maxlength="20"
-          />
-          <input
-            v-model="commentText"
-            type="text"
-            class="comment-text"
-            placeholder="따뜻한 댓글을 남겨주세요"
-            @keyup.enter="submitComment"
-          />
-          <button class="btn btn-primary" @click="submitComment">등록</button>
+        <div class="comment-form-wrap">
+          <div class="comment-meta-inputs">
+            <input
+              v-model="commentNickname"
+              type="text"
+              class="comment-input comment-nick"
+              placeholder="닉네임"
+              maxlength="12"
+            />
+            <input
+              v-model="commentPassword"
+              type="password"
+              class="comment-input comment-pass"
+              placeholder="비밀번호(4자 이상)"
+              maxlength="20"
+            />
+          </div>
+          <div class="comment-main-input-row">
+            <input
+              v-model="commentText"
+              type="text"
+              class="comment-input comment-text"
+              placeholder="따뜻한 이야기를 댓글로 이어가 주세요."
+              @keyup.enter="submitComment"
+            />
+            <button class="btn btn-primary submit-comment-btn" @click="submitComment">댓글 달기 💬</button>
+          </div>
         </div>
       </section>
     </div>
@@ -206,7 +229,7 @@ onMounted(load);
     <PasswordModal
       v-if="showCommentModal"
       ref="commentModalRef"
-      title="댓글 비밀번호를 입력해주세요"
+      :title="commentModalTitle"
       @confirm="handleCommentConfirm"
       @cancel="showCommentModal = false"
     />
@@ -215,116 +238,213 @@ onMounted(load);
 
 <style scoped>
 .detail-page {
-  padding: 32px 0 64px;
+  padding: 40px 0 80px;
+  background: var(--bg);
+  min-height: 100vh;
+}
+
+.container-sm {
+  max-width: 680px;
 }
 
 .back-btn {
   background: none;
   border: none;
-  color: var(--forest-700);
-  font-size: var(--text-sm);
-  font-weight: 600;
-  margin-bottom: 16px;
-  padding: 0;
-}
-
-.post-card {
-  padding: 28px;
+  color: var(--forest-600);
+  font-size: var(--text-sm, 14px);
+  font-weight: 700;
   margin-bottom: 20px;
+  padding: 0;
+  cursor: pointer;
+  transition: transform 0.2s ease;
 }
 
-.category-tag {
-  display: inline-block;
-  font-size: var(--text-xs);
-  background: var(--surface-alt);
+.back-btn:hover {
+  transform: translateX(-3px);
   color: var(--forest-700);
-  padding: 4px 10px;
-  border-radius: 999px;
-  margin-bottom: 8px;
+}
+
+/* 🌿 본문 카드 세련되게 정돈 */
+.post-card {
+  padding: 32px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-soft);
+  margin-bottom: 24px;
+}
+
+.post-header {
+  border-bottom: 1px dashed var(--line);
+  padding-bottom: 20px;
+  margin-bottom: 24px;
+}
+
+.post-title {
+  font-size: var(--text-2xl, 24px);
+  color: var(--forest-900);
+  margin: 12px 0 0 0;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.35;
 }
 
 .meta {
   display: flex;
+  flex-wrap: wrap;
   gap: 12px;
-  font-size: var(--text-xs);
+  font-size: var(--text-xs, 12px);
+}
+
+.writer-tag {
+  color: var(--forest-700);
+  font-weight: 700;
+}
+
+.date-tag, .view-tag {
   color: var(--moss-400);
-  margin-top: 8px;
+  font-weight: 500;
 }
 
 .content {
+  color: var(--text-main);
   white-space: pre-wrap;
-  margin-top: 20px;
+  font-size: var(--text-base, 16px);
   line-height: 1.8;
+  margin: 0;
 }
 
 .post-actions {
   display: flex;
   justify-content: flex-end;
-  gap: 8px;
-  margin-top: 24px;
+  gap: 10px;
+  margin-top: 32px;
 }
 
+/* 🌿 댓글 세션 (메신저 말풍선 테마 UX 개편) */
 .comments {
-  padding: 24px;
+  padding: 32px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-soft);
 }
 
-.comments ul {
+.comments-header {
+  border-bottom: 1.5px solid var(--line);
+  padding-bottom: 16px;
+  margin-bottom: 24px;
+}
+
+.comments-title {
+  font-size: var(--text-lg, 18px);
+  font-weight: 800;
+  color: var(--forest-900);
+  margin: 0;
+}
+
+.comments-title .count {
+  color: var(--forest-600);
+  font-size: var(--text-base);
+  margin-left: 4px;
+}
+
+.comment-list {
   list-style: none;
   padding: 0;
-  margin: 16px 0;
+  margin: 0 0 32px 0;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 20px;
 }
 
-.comment {
+/* 💬 말풍선 아이템 스타일 */
+.comment-bubble-item {
   display: flex;
-  justify-content: space-between;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--surface-alt);
+  border: 1px solid var(--line);
+  display: flex;
   align-items: center;
-  border-bottom: 1px solid var(--line);
-  padding-bottom: 12px;
+  justify-content: center;
+  font-size: 16px;
+  flex-shrink: 0;
+  box-shadow: var(--shadow-soft);
 }
 
-.comment-content-wrap {
-  display: flex;
-  gap: 12px;
-  align-items: baseline;
-  font-size: var(--text-sm);
+.bubble-content-area {
   flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.bubble-info {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.comment-writer {
+  font-size: var(--text-sm, 14px);
+  color: var(--forest-900);
+  font-weight: 700;
+}
+
+.comment-time {
+  font-size: 10px;
+  color: var(--moss-400);
+  font-weight: 500;
+}
+
+/* 💬 실제 말풍선 영역 */
+.speech-bubble {
+  background: var(--surface-alt);
+  color: var(--text-main);
+  padding: 10px 16px;
+  border-radius: 0 16px 16px 16px; /* 대화방 스타일의 둥근 테두리 처리 */
+  display: inline-block;
+  align-self: flex-start; /* 글씨 길이에 맞춤 */
+  max-width: 90%;
+  border: 1px solid var(--line);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.02);
 }
 
 .comment-body {
+  font-size: var(--text-sm, 14px);
+  line-height: 1.5;
   word-break: break-all;
+  white-space: pre-wrap;
 }
 
-.comment strong {
-  color: var(--forest-700);
-}
-
-.comment time {
-  margin-left: auto;
-  font-size: var(--text-xs);
-  color: var(--moss-400);
-  padding-right: 16px;
-}
-
-/* 💡 댓글 조작 스타일 추가 */
+/* ⚙️ 댓글 조작 영역 */
 .comment-actions {
   display: flex;
-  gap: 8px;
+  gap: 12px;
+  margin-top: 2px;
+  padding-left: 4px;
 }
 
 .action-link {
   background: none;
   border: none;
   color: var(--moss-400);
-  font-size: var(--text-xs);
+  font-size: 11px;
+  font-weight: 600;
   cursor: pointer;
-  padding: 2px 4px;
+  padding: 0;
+  transition: color 0.2s ease;
 }
 
 .action-link:hover {
-  color: var(--forest-700);
+  color: var(--forest-600);
   text-decoration: underline;
 }
 
@@ -332,32 +452,97 @@ onMounted(load);
   color: var(--danger);
 }
 
-.comment-form {
+.empty-comments {
+  text-align: center;
+  padding: 40px 0;
+  font-size: var(--text-sm, 14px);
+  color: var(--moss-400);
+  font-weight: 500;
+  border: 1.5px dashed var(--line);
+  border-radius: var(--radius-md);
+}
+
+/* 🌿 댓글 등록 카드 폼 디자인 업그레이드 */
+.comment-form-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: var(--surface-alt);
+  padding: 18px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--line);
+}
+
+.comment-input {
+  background: var(--surface);
+  color: var(--text-main);
+  border: 1.5px solid var(--line);
+  transition: all 0.25s var(--ease-leaf);
+}
+
+.comment-input:focus {
+  border-color: var(--forest-600);
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(44, 92, 50, 0.12);
+}
+
+.comment-meta-inputs {
   display: flex;
   gap: 8px;
 }
 
-.comment-nick {
-  width: 96px;
-  flex-shrink: 0;
-  padding: 10px 12px;
-  border: 1px solid var(--line);
+.comment-nick, .comment-pass {
+  width: 50%;
+  padding: 10px 14px;
   border-radius: var(--radius-sm);
+  font-size: var(--text-sm, 14px);
 }
 
-/* 💡 비밀번호 인풋 스타일 추가 */
-.comment-pass {
-  width: 124px;
-  flex-shrink: 0;
-  padding: 10px 12px;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-sm);
+.comment-main-input-row {
+  display: flex;
+  gap: 8px;
 }
 
 .comment-text {
   flex: 1;
   padding: 10px 14px;
-  border: 1px solid var(--line);
   border-radius: var(--radius-sm);
+  font-size: var(--text-sm, 14px);
+}
+
+.submit-comment-btn {
+  white-space: nowrap;
+  font-size: var(--text-sm, 14px);
+  font-weight: 700;
+  padding: 10px 16px;
+  border-radius: var(--radius-sm);
+}
+
+/* 진입 모션 */
+.animate-fade-in {
+  animation: fadeIn 0.4s var(--ease-leaf) forwards;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 580px) {
+  .comment-main-input-row {
+    flex-direction: column;
+  }
+  .submit-comment-btn {
+    width: 100%;
+  }
+  .speech-bubble {
+    max-width: 100%;
+  }
 }
 </style>

@@ -22,7 +22,7 @@ const locations = ref([]);
 const loading = ref(false);
 const errorMsg = ref("");
 
-// 💡 백엔드 공공데이터 분류 코드(contenttypeid)를 프론트엔드 한글 카테고리로 변환하는 매핑 테이블
+// 💡 백엔드 공공데이터 분류 코드(contenttypeid)를 한글 카테고리로 매핑
 const CODE_TO_CATEGORY = {
   "12": "관광지",
   "14": "문화시설",
@@ -77,7 +77,7 @@ async function drawBoundaries() {
   clearPolygons();
   try {
     const response = await fetch('/daejeon-boundary.json');
-    if (!response.ok) throw new Error("JSON 파일을 찾지 못했거나 가져오지 못했습니다.");
+    if (!response.ok) throw new Error("JSON 파일을 찾지 못했습니다.");
     
     const geoData = await response.json();
 
@@ -93,8 +93,8 @@ async function drawBoundaries() {
         strokeWeight: isCurrentGu ? 3 : 1.5,
         strokeColor: isCurrentGu ? '#2f5233' : '#888888',
         strokeOpacity: 0.8,
-        fillColor: isCurrentGu ? '#e8f5e9' : '#ffffff',
-        fillOpacity: isCurrentGu ? 0.35 : 0.1
+        fillColor: isCurrentGu ? '#e9f2eb' : '#ffffff',
+        fillOpacity: isCurrentGu ? 0.3 : 0.1
       });
 
       polygon.setMap(map);
@@ -108,7 +108,7 @@ async function drawBoundaries() {
       kakao.maps.event.addListener(polygon, 'mouseover', () => {
         if (name !== props.gu) {
           polygon.setOptions({
-            fillColor: '#c8e6c9',
+            fillColor: '#d6edd8',
             fillOpacity: 0.4,
             strokeColor: '#2f5233'
           });
@@ -144,7 +144,6 @@ function renderMarkers() {
   if (!map) return;
   clearMarkers();
 
-  // 💡 [수정 완료] locations 안의 contenttypeid를 한글 카테고리로 매핑해서 사용자가 켠 카테고리만 필터링합니다.
   const filtered = locations.value.filter((loc) => {
     const hangulCategory = CODE_TO_CATEGORY[loc.contenttypeid] || "기타";
     return activeCategories.value.has(hangulCategory);
@@ -163,21 +162,29 @@ function renderMarkers() {
       if (!isInside) return;
     }
 
-    // 💡 [수정 완료] contenttypeid에 맞춰 핀 색상을 결정합니다.
     const hangulCategory = CODE_TO_CATEGORY[loc.contenttypeid] || "기타";
     const pinColor = resolvedColor(hangulCategory);
     const position = new kakao.maps.LatLng(lat, lng);
 
     const markerContent = document.createElement('div');
     markerContent.style.cssText = `
-      width: 16px;
-      height: 16px;
+      width: 18px;
+      height: 18px;
       background-color: ${pinColor};
-      border: 2px solid #ffffff;
+      border: 2.5px solid #ffffff;
       border-radius: 50%;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+      box-shadow: 0 3px 6px rgba(0,0,0,0.22);
       cursor: pointer;
+      transition: transform 0.2s ease;
     `;
+    
+    // 마우스 호버 시 핀 크기 업 이펙트
+    markerContent.addEventListener('mouseenter', () => {
+      markerContent.style.transform = 'scale(1.25)';
+    });
+    markerContent.addEventListener('mouseleave', () => {
+      markerContent.style.transform = 'scale(1)';
+    });
 
     const customMarker = new kakao.maps.CustomOverlay({
       position: position,
@@ -188,48 +195,33 @@ function renderMarkers() {
     customMarker.setMap(map);
     currentMarkers.push(customMarker);
 
-    // 💡 [수정 완료] schemas.py에 정의된 firstimage 변수명으로 변경했습니다.
     const img = loc.firstimage
-      ? `<img src="${loc.firstimage}" alt="${loc.title}" style="width:100%; max-height:100px; object-fit:cover; border-radius:6px; margin-bottom:6px;" />`
+      ? `<div class="popup-img-wrap"><img src="${loc.firstimage}" alt="${loc.title}" /></div>`
       : "";
 
     const overlayContent = document.createElement('div');
     overlayContent.className = 'kakaomap-popup';
-    overlayContent.style.cssText = `
-      position: absolute;
-      bottom: 25px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: white;
-      border: 1px solid #ccc;
-      border-radius: 8px;
-      padding: 10px;
-      min-width: 180px;
-      box-shadow: 0px 2px 6px rgba(0,0,0,0.2);
-      font-family: Pretendard, sans-serif;
-      z-index: 10;
-      display: none;
-    `;
     
-    // 💡 [수정 완료] 주소 필드를 schemas.py 규격에 맞게 loc.addr1로 변경했습니다.
+    // 💡 [디자인 혁신] 인라인 style.cssText를 과감히 제거하고 전용 스코프 스타일 클래스로 대체합니다!
     overlayContent.innerHTML = `
-      <div style="position:relative;">
-        <button class="close-btn" style="position:absolute; top:-4px; right:-2px; background:none; border:none; font-size:14px; cursor:pointer; color:#999;">×</button>
+      <div class="popup-box">
+        <button class="close-btn">×</button>
         ${img}
-        <strong style="font-size:13px; display:block; margin-bottom:2px;">${loc.title}</strong>
-        <span style="color:${pinColor}; font-weight:600; font-size:11px; display:block; margin-bottom:2px;">${hangulCategory}</span>
-        <span style="font-size:11px; color:#666; display:block; margin-bottom:2px;">${loc.addr1 || "주소 정보 없음"}</span>
-        <a href="${kakaoSearchUrl(loc.title, loc.addr1)}" target="_blank" rel="noopener"
-           style="font-size:11px; color:#2f5233; font-weight:600; text-decoration:none; display:inline-block; margin-top:4px;">
-          카카오맵에서 상세보기 →
-        </a>
+        <div class="popup-body">
+          <span class="popup-cat" style="color: ${pinColor};">${hangulCategory}</span>
+          <strong class="popup-title">${loc.title}</strong>
+          <span class="popup-addr">${loc.addr1 || "주소 정보 없음"}</span>
+          <a href="${kakaoSearchUrl(loc.title, loc.addr1)}" target="_blank" class="popup-link">
+            카카오맵으로 자세히 보기 →
+          </a>
+        </div>
       </div>
     `;
 
     const detailOverlay = new kakao.maps.CustomOverlay({
       position: position,
       content: overlayContent,
-      yAnchor: 1
+      yAnchor: 1.05 // 핀의 바로 윗 공간에 정렬되도록 오프셋 조절
     });
 
     detailOverlay.setMap(map);
@@ -265,12 +257,12 @@ async function fetchLocations() {
 function toggleCategory(cat) {
   const next = new Set(activeCategories.value);
   if (next.has(cat)) {
-    next.delete(cat); // 이미 켜져 있다면 해제하여 핀 숨기기
+    next.delete(cat); 
   } else {
-    next.add(cat);    // 꺼져 있다면 Set에 더해서 핀 보이게 하기
+    next.add(cat);    
   }
   activeCategories.value = next;
-  renderMarkers(); // 상태가 바뀔 때마다 핀 렌더링 갱신
+  renderMarkers(); 
 }
 
 onMounted(async () => {
@@ -291,7 +283,7 @@ onMounted(async () => {
     
     await drawBoundaries();
     await fetchLocations();
-    renderMarkers(); // 초기 빈 Set 기반으로 마커가 하나도 없는 깨끗한 지도 렌더링
+    renderMarkers(); 
   } else {
     errorMsg.value = "카카오 지도 API가 로드되지 않았습니다. index.html 설정을 확인해 주세요.";
   }
@@ -340,17 +332,145 @@ watch(
       </div>
 
       <div ref="mapEl" class="kakao-map-el"></div>
-      <p v-if="loading" class="status">불러오는 중…</p>
+      <p v-if="loading" class="status">숲 구석구석을 둘러보는 중…</p>
       <p v-if="errorMsg" class="status error">{{ errorMsg }}</p>
     </div>
   </div>
 </template>
 
+<style>
+/* 🌿 카카오 오버레이 전용 스타일 (상위 scoped 스코프 제약을 해제하여 맵 내부에 안전하게 전파) */
+.kakaomap-popup {
+  display: none;
+  position: absolute;
+  bottom: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 100;
+}
+
+.popup-box {
+  position: relative;
+  background: white;
+  border-radius: var(--radius-md, 14px);
+  width: 200px;
+  box-shadow: 0 10px 24px rgba(18, 33, 22, 0.16);
+  border: 1px solid var(--line, #dbe4d8);
+  overflow: hidden;
+  animation: popupScale 0.25s var(--ease-leaf, cubic-bezier(0.16, 1, 0.3, 1));
+}
+
+@keyframes popupScale {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* 팝업 하단 말풍선 삼각 꼬리말 제작 */
+.popup-box::after {
+  content: "";
+  position: absolute;
+  bottom: -6px;
+  left: 50%;
+  transform: translateX(-50%) rotate(45deg);
+  width: 12px;
+  height: 12px;
+  background: white;
+  border-right: 1px solid var(--line, #dbe4d8);
+  border-bottom: 1px solid var(--line, #dbe4d8);
+}
+
+.popup-box .close-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 22px;
+  height: 22px;
+  background: rgba(255, 255, 255, 0.85);
+  border-radius: 50%;
+  border: none;
+  font-size: 16px;
+  cursor: pointer;
+  color: #777;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+  transition: all 0.15s;
+}
+
+.popup-box .close-btn:hover {
+  background: var(--forest-900, #122116);
+  color: white;
+}
+
+.popup-img-wrap {
+  width: 100%;
+  height: 96px;
+  overflow: hidden;
+  background: #f3f5f3;
+}
+
+.popup-img-wrap img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.popup-body {
+  padding: 12px 14px 14px;
+  display: flex;
+  flex-direction: column;
+}
+
+.popup-cat {
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 3px;
+}
+
+.popup-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--forest-900, #122116);
+  margin-bottom: 4px;
+  line-height: 1.35;
+}
+
+.popup-addr {
+  font-size: 11px;
+  color: var(--moss-400, #557b6b);
+  line-height: 1.4;
+  margin-bottom: 8px;
+}
+
+.popup-link {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--forest-600, #25442a) !important;
+  text-decoration: none;
+  transition: transform 0.2s;
+}
+
+.popup-link:hover {
+  text-decoration: underline;
+  transform: translateX(1px);
+}
+</style>
+
 <style scoped>
 .map-wrap {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 16px;
 }
 
 .legend {
@@ -363,30 +483,32 @@ watch(
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 6px 12px;
+  padding: 8px 16px;
   border-radius: 999px;
-  border: 1px solid var(--line);
+  border: 1.5px solid var(--line);
   background: var(--surface);
   font-size: var(--text-xs);
   color: var(--forest-700);
-  transition: opacity 0.15s, background-color 0.15s, border-color 0.15s;
+  transition: all 0.2s var(--ease-leaf);
   cursor: pointer;
+  font-weight: 700;
 }
 
-/* 선택 해제된(꺼진) 카테고리: 흐리게 톤다운 */
+/* 🌿 비활성화 상태의 모던한 그레이시-아웃 처리 */
 .legend-chip.inactive {
-  opacity: 0.45;
-  background: #f3f4f6; 
-  border-color: #e5e7eb;
-  color: #9ca3af;
+  opacity: 0.55;
+  background: #f1f3f0; 
+  border-color: #dbe0da;
+  color: #8c968a;
 }
 
-/* 선택되어 활성화된 카테고리: 선명한 테두리와 숲 배경 테마 적용 */
+/* 🌿 선택 시 싱그러운 카테고리별 포인트 입체감 확보 */
 .legend-chip:not(.inactive) {
-  background-color: var(--forest-50, #f4fbf7);
-  border-color: var(--forest-300, #a3d9b9);
-  color: var(--forest-900, #14532d);
-  font-weight: 600;
+  background-color: #f3f9f5;
+  border-color: var(--forest-600);
+  color: var(--forest-900);
+  box-shadow: 0 4px 10px rgba(37, 68, 42, 0.06);
+  transform: translateY(-1px);
 }
 
 .dot {
@@ -397,9 +519,8 @@ watch(
   display: inline-block;
 }
 
-/* 꺼진 카테고리의 핀 도트는 무채색 회색으로 다운 */
 .legend-chip.inactive .dot {
-  background: #d1d5db !important;
+  background: #9fa89d !important;
 }
 
 .map-area {
@@ -414,12 +535,11 @@ watch(
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 8px 14px;
-  background-color: rgba(255, 255, 255, 0.9);
-  border: 1.5px solid #2f5233;
-  border-radius: 20px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
-  font-family: Pretendard, sans-serif;
+  padding: 8px 16px;
+  background-color: rgba(255, 255, 255, 0.94);
+  border: 1.5px solid var(--forest-600);
+  border-radius: 999px;
+  box-shadow: var(--shadow-lift);
   pointer-events: none;
 }
 
@@ -428,16 +548,17 @@ watch(
 }
 
 .gu-name {
-  font-size: 14px;
-  font-weight: 700;
-  color: #2f5233;
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--forest-600);
 }
 
 .kakao-map-el {
-  height: 420px;
+  height: 440px;
   width: 100%;
-  border-radius: var(--radius-md);
-  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  border: 1.5px solid var(--line);
+  box-shadow: var(--shadow-soft);
 }
 
 .status {
@@ -445,14 +566,17 @@ watch(
   top: 12px;
   left: 12px;
   background: var(--surface);
-  padding: 6px 12px;
+  padding: 8px 14px;
   border-radius: var(--radius-sm);
   font-size: var(--text-sm);
   box-shadow: var(--shadow-soft);
   z-index: 20;
+  font-weight: 600;
+  color: var(--forest-700);
 }
 
 .status.error {
   color: var(--danger);
+  border-left: 4px solid var(--danger);
 }
 </style>
