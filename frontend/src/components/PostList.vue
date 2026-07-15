@@ -20,10 +20,9 @@ const hasMore = ref(true);
 async function fetchPosts() {
   loading.value = true;
   try {
-    const { data } = await client.get("/api/posts", {
+    const { data } = await client.get("/api/boards", {
       params: {
         gu: props.gu,
-        category: category.value || undefined,
         keyword: keyword.value || undefined,
         page: page.value,
         size,
@@ -104,13 +103,13 @@ onMounted(fetchPosts);
         </tr>
       </thead>
       <tbody>
-        <tr v-for="p in posts" :key="p.id" @click="goDetail(p.id)">
+        <tr v-for="p in posts" :key="p.board_id" @click="goDetail(p.board_id)">
           <td class="col-tag">
             <span class="tag-badge">{{ p.category }}</span>
           </td>
           <td class="title-cell">{{ p.title }}</td>
-          <td>{{ p.nickname }}</td>
-          <td>{{ p.views }}</td>
+          <td>{{ p.writer }}</td>
+          <td>{{ p.view_count }}</td>
           <td>{{ formatDate(p.created_at) }}</td>
         </tr>
       </tbody>

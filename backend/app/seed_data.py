@@ -1,5 +1,6 @@
 """
-의뢰사 제공 JSON(TourAPI 4.0) -> locations 테이블 적재 스크립트
+의뢰사 제공 JSON(TourAPI 4.0) -> location 테이블 적재 스크립트
+(참고용: 은아 DB 담당자가 02_insert_data.py로 이미 적재 완료. 재구축 시에만 사용)
 
 사용법:
     python -m app.seed_data
@@ -16,10 +17,9 @@ import re
 from app.database import Base, engine, SessionLocal
 from app import models
 
-# 실제 배포/개발 환경에 맞게 .env 의 DATA_DIR 로 override 가능
 DATA_DIR = os.getenv("DATA_DIR", "./data")
 
-GU_PATTERN = re.compile(r"(\S+구)")  # 주소에서 "OO구" 패턴 추출
+GU_PATTERN = re.compile(r"(\S+구)")
 
 
 def parse_gu(addr1: str) -> str:
@@ -31,7 +31,6 @@ def parse_gu(addr1: str) -> str:
 
 
 def load_json_files():
-    """DATA_DIR 내 모든 *.json 파일을 순회하며 적재"""
     files = glob.glob(os.path.join(DATA_DIR, "*.json"))
     if not files:
         print(f"[경고] {DATA_DIR} 에서 JSON 파일을 찾지 못했습니다.")
@@ -47,13 +46,12 @@ def load_json_files():
             with open(filepath, encoding="utf-8") as f:
                 data = json.load(f)
 
-            category = data.get("contentType", "기타")
+            contenttypeid = data.get("contentType", "")
             items = data.get("items", [])
 
             for item in items:
                 addr1 = item.get("addr1", "") or ""
 
-                # 대전광역시 데이터만 사용 (충남/충북 데이터는 제외)
                 if not addr1.startswith("대전"):
                     total_skipped += 1
                     continue
@@ -62,7 +60,6 @@ def load_json_files():
                 if not contentid:
                     continue
 
-                # 이미 있으면 스킵 (재실행 시 중복 방지)
                 exists = (
                     db.query(models.Location)
                     .filter(models.Location.contentid == contentid)
@@ -73,14 +70,14 @@ def load_json_files():
 
                 location = models.Location(
                     contentid=contentid,
-                    category=category,
+                    contenttypeid=contenttypeid,
                     gu=parse_gu(addr1),
                     title=item.get("title", ""),
-                    addr=addr1,
+                    addr1=addr1,
                     tel=item.get("tel") or None,
                     mapx=item.get("mapx") or None,
                     mapy=item.get("mapy") or None,
-                    image_url=item.get("firstimage") or None,
+                    firstimage=item.get("firstimage") or None,
                 )
                 db.add(location)
                 total_loaded += 1

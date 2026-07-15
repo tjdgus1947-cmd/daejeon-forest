@@ -20,18 +20,14 @@ const deleteModalRef = ref(null);
 
 async function load() {
   loading.value = true;
-  const { data } = await client.get(`/api/posts/${props.id}`);
+  const { data } = await client.get(`/api/boards/${props.id}`);
   post.value = data;
   loading.value = false;
 }
 
-function goEdit() {
-  router.push({ name: "post-edit", params: { gu: props.gu, id: props.id } });
-}
-
 async function confirmDelete(password) {
   try {
-    await client.delete(`/api/posts/${props.id}`, { data: { password } });
+    await client.delete(`/api/boards/${props.id}`, { data: { board_password: password } });
     router.push({ name: "district", params: { gu: props.gu } });
   } catch (e) {
     deleteModalRef.value?.showError("비밀번호가 일치하지 않습니다.");
@@ -41,12 +37,17 @@ async function confirmDelete(password) {
 async function submitComment() {
   const text = commentText.value.trim();
   if (!text) return;
-  await client.post(`/api/posts/${props.id}/comments`, {
+  await client.post(`/api/boards/${props.id}/comments`, {
     content: text,
-    nickname: commentNickname.value.trim() || "익명",
+    writer: commentNickname.value.trim() || "익명",
+    comment_password: "0000", // 임시값 — 아래 참고
   });
   commentText.value = "";
   await load();
+}
+
+function goEdit() {
+  router.push({ name: "post-edit", params: { gu: props.gu, id: props.id } });
 }
 
 function formatDate(iso) {
@@ -63,14 +64,14 @@ onMounted(load);
         ← 목록으로
       </button>
 
-      <article class="card post-card">
+      <article class="meta">
         <header>
           <span class="category-tag">{{ post.category }}</span>
           <h1>{{ post.title }}</h1>
           <div class="meta">
-            <span>{{ post.nickname }}</span>
+            <span>{{ post.writer }}</span>
             <span>{{ formatDate(post.created_at) }}</span>
-            <span>조회 {{ post.views }}</span>
+            <span>조회 {{ post.view_count }}</span>
           </div>
         </header>
 
@@ -88,7 +89,7 @@ onMounted(load);
         <h2>댓글 {{ post.comments.length }}</h2>
         <ul>
           <li v-for="c in post.comments" :key="c.id" class="comment">
-            <strong>{{ c.nickname }}</strong>
+            <strong>{{ c.writer }}</strong>
             <span>{{ c.content }}</span>
             <time>{{ formatDate(c.created_at) }}</time>
           </li>

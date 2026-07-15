@@ -16,7 +16,7 @@ router = APIRouter(prefix="/api/locations", tags=["locations"])
 @router.get("", response_model=List[schemas.LocationOut])
 def list_locations(
     gu: Optional[str] = Query(None, description="구 필터 (예: 유성구)"),
-    category: Optional[str] = Query(None, description="카테고리 필터 (예: 음식점)"),
+    category: Optional[str] = Query(None, description="카테고리 필터 (contenttypeid, 예: 39)"),
     db: Session = Depends(get_db),
 ):
     """구/카테고리로 필터링된 장소 목록 (지도 핀 렌더링용)"""
@@ -24,7 +24,7 @@ def list_locations(
     if gu:
         q = q.filter(models.Location.gu == gu)
     if category:
-        q = q.filter(models.Location.category == category)
+        q = q.filter(models.Location.contenttypeid == category)
     return q.all()
 
 
@@ -38,5 +38,5 @@ def list_gu(db: Session = Depends(get_db)):
 @router.get("/categories")
 def list_categories(db: Session = Depends(get_db)):
     """카테고리 목록 (범례/필터용)"""
-    rows = db.query(models.Location.category).distinct().all()
+    rows = db.query(models.Location.contenttypeid).distinct().all()
     return sorted({r[0] for r in rows if r[0]})
