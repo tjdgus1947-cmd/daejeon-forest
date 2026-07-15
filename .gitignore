@@ -5,3 +5,7 @@ __pycache__/
 venv/
 *.db
 !data/*.json
+node_modules/
+dist/
+.env.local
+.DS_Store
