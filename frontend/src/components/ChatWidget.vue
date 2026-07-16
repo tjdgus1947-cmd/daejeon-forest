@@ -1,5 +1,5 @@
 <script setup>
-import { ref, nextTick } from "vue";
+import { ref, nextTick, onMounted, onBeforeUnmount } from "vue";
 import client from "../api/client";
 
 const open = ref(false);
@@ -13,6 +13,7 @@ const messages = ref([
   },
 ]);
 const scrollEl = ref(null);
+const widgetRef = ref(null);
 
 function toggle() {
   open.value = !open.value;
@@ -20,6 +21,21 @@ function toggle() {
     scrollToBottom();
   }
 }
+
+// 위젯(패널+FAB버튼) 바깥을 클릭하면 패널 닫기
+function handleClickOutside(event) {
+  if (open.value && widgetRef.value && !widgetRef.value.contains(event.target)) {
+    open.value = false;
+  }
+}
+
+onMounted(() => {
+  document.addEventListener("mousedown", handleClickOutside);
+});
+
+onBeforeUnmount(() => {
+  document.removeEventListener("mousedown", handleClickOutside);
+});
 
 async function scrollToBottom() {
   await nextTick();
@@ -61,7 +77,7 @@ async function send() {
 </script>
 
 <template>
-  <div class="chat-widget">
+  <div class="chat-widget" ref="widgetRef">
     <div v-if="open" class="panel card animate-pop-up">
       <header class="panel-header">
         <div class="header-title">
@@ -126,7 +142,6 @@ async function send() {
   font-family: 'Cafe24Surround', var(--font-body);
 }
 
-/* 🌿 둥글고 생동감 넘치는 호버 모션이 들어간 FAB */
 .fab {
   width: 60px;
   height: 60px;
@@ -151,7 +166,7 @@ async function send() {
 
 .fab:hover {
   background: var(--forest-700);
-  transform: translateY(-4px) scale(1.05); /* 콩콩 뛰어오르는 듯한 이펙트 */
+  transform: translateY(-4px) scale(1.05);
   box-shadow: 0 16px 32px rgba(18, 33, 22, 0.24);
 }
 
@@ -159,8 +174,6 @@ async function send() {
   transform: translateY(-1px) scale(0.98);
 }
 
-/* 🔧 FIX: var(--forest-900)은 다크모드에서 거의 흰색으로 재정의되는 "텍스트용" 토큰이라
-   배경색으로 쓰면 다크모드에서 하얗게 뒤집힘. 헤더와 동일하게 고정 다크그린을 사용. */
 .fab.active {
   background: #16281c;
 }
@@ -169,7 +182,6 @@ async function send() {
   background: #111e14;
 }
 
-/* 🌿 대화창 패널 프리미엄 화화 */
 .panel {
   width: min(350px, 90vw);
   height: 480px;
@@ -181,16 +193,21 @@ async function send() {
   box-shadow: var(--shadow-lift);
 }
 
-/* 🔧 FIX: var(--forest-900) 대신 고정 다크그린 그라디언트.
-   전역 헤더(.global-header)도 같은 이유로 고정값(#1b351e)을 쓰고 있어 톤을 맞췄음. */
+/* 헤더 배경: var(--forest-900) 대신 고정 그라데이션 사용 (다크모드에서 해당 변수가
+   거의 흰색으로 재정의되어 배경으로 쓰면 하얗게 뒤집히는 문제 회피).
+   다크모드 전용 톤은 아래 :global(html[data-theme="dark"]) 규칙으로 별도 지정. */
 .panel-header {
-  background: linear-gradient(135deg, #16281c 0%, #1e3a24 100%);
+  background: linear-gradient(135deg, #16281c 0%, #2f5233 100%);
   color: white;
   padding: 16px 20px;
   display: flex;
   justify-content: space-between;
   align-items: center;
   border-bottom: 2.5px solid var(--sun-500);
+}
+
+:global(html[data-theme="dark"]) .panel-header {
+  background: linear-gradient(135deg, #0d1a0f 0%, #16281c 100%);
 }
 
 .header-title {
@@ -239,11 +256,9 @@ async function send() {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  /* 🔧 FIX: 하드코딩된 #f4f7f2 대신 테마 배경 변수 사용 -> 다크모드에서 자동으로 어두워짐 */
   background: var(--bg);
 }
 
-/* 🌿 숲 가이드 전용 말풍선 설계 */
 .bubble {
   max-width: 82%;
   padding: 10px 14px;
@@ -269,7 +284,7 @@ async function send() {
   background: var(--surface);
   border: 1px solid var(--line);
   align-self: flex-start;
-  border-bottom-left-radius: 2px; /* 살짝 꼬리모양 느낌 */
+  border-bottom-left-radius: 2px;
 }
 
 .bubble.user {
@@ -279,7 +294,6 @@ async function send() {
   border-bottom-right-radius: 2px;
 }
 
-/* 🌿 실시간 타이핑 맥박 애니메이션 */
 .bubble.typing {
   align-self: flex-start;
   background: var(--surface);
@@ -307,7 +321,6 @@ async function send() {
   50% { transform: scale(1.2); opacity: 1; }
 }
 
-/* 🌿 글쓰기 입력창(Composer) */
 .composer {
   display: flex;
   gap: 8px;
@@ -338,7 +351,6 @@ async function send() {
   border-radius: var(--radius-sm);
 }
 
-/* 부드럽게 솟구쳐 오르는 열기 모션 */
 .animate-pop-up {
   animation: popUp 0.3s var(--ease-leaf) forwards;
   transform-origin: bottom right;
