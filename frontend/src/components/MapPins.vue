@@ -16,6 +16,9 @@ let currentMarkers = [];
 let currentCustomOverlays = [];
 const polygons = ref([]); 
 
+// 🎯 현재 위치 마커를 추적하기 위한 변수
+let myLocationMarker = null;
+
 // 처음 마운트 시 빈 Set으로 시작하여 "모든 핀이 숨겨진 상태"로 출발합니다!
 const activeCategories = ref(new Set());
 const locations = ref([]);
@@ -259,10 +262,87 @@ function toggleCategory(cat) {
   if (next.has(cat)) {
     next.delete(cat); 
   } else {
-    next.add(cat);    
+    next.add(cat);     
   }
   activeCategories.value = next;
   renderMarkers(); 
+}
+
+// 🎯 [신규/수정] 고정밀 GPS 수신 및 맵에 내 위치 마커 추가 기능
+function moveToCurrentLocation() {
+  if (navigator.geolocation) {
+    loading.value = true;
+    
+    // 정확도를 대폭 끌어올리기 위한 옵션 세팅
+    const geoOptions = {
+      enableHighAccuracy: true, // 오차를 최소화하는 고정밀 측정 가동
+      timeout: 10000,
+      maximumAge: 0
+    };
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        loading.value = false;
+        const lat = position.coords.latitude;  // 위도
+        const lon = position.coords.longitude; // 경도
+
+        const locPosition = new kakao.maps.LatLng(lat, lon);
+
+        if (map) {
+          // 1. 기존에 이미 현재 위치 마커를 그린 적이 있다면 지도에서 먼저 지웁니다.
+          if (myLocationMarker) {
+            myLocationMarker.setMap(null);
+          }
+
+          // 2. 내 위치 전용 귀여운 초록색 핀 마커 생성
+          const markerContent = document.createElement('div');
+          markerContent.style.cssText = `
+            width: 20px;
+            height: 20px;
+            background-color: #2e7d32; /* 숲의 시그니처 초록색 현재위치 마커 */
+            border: 3px solid #ffffff;
+            border-radius: 50%;
+            box-shadow: 0 0 10px rgba(46, 125, 50, 0.6);
+            position: relative;
+          `;
+          
+          // 펄스 애니메이션용 원형 링
+          const pulseRing = document.createElement('div');
+          pulseRing.style.cssText = `
+            position: absolute;
+            top: -3px;
+            left: -3px;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #2e7d32;
+            border-radius: 50%;
+            animation: gpsPulse 1.8s infinite ease-out;
+            pointer-events: none;
+          `;
+          markerContent.appendChild(pulseRing);
+
+          myLocationMarker = new kakao.maps.CustomOverlay({
+            position: locPosition,
+            content: markerContent,
+            yAnchor: 0.5
+          });
+
+          // 3. 지도에 내 마커 얹고 화면 부드럽게 줌인
+          myLocationMarker.setMap(map);
+          map.panTo(locPosition);
+          map.setLevel(4, { animate: true }); // 가독성 좋은 4레벨로 확대
+        }
+      },
+      (error) => {
+        loading.value = false;
+        console.error("위치 획득 실패:", error);
+        alert("현재 위치 정보를 정확하게 가져올 수 없어유. 브라우저의 GPS가 켜져 있는지 확인해 보셔유!");
+      },
+      geoOptions
+    );
+  } else {
+    alert("이 브라우저에서는 GPS 위치 서비스를 지원하지 않아유.");
+  }
 }
 
 onMounted(async () => {
@@ -292,6 +372,9 @@ onMounted(async () => {
 onBeforeUnmount(() => {
   clearMarkers();
   clearPolygons();
+  if (myLocationMarker) {
+    myLocationMarker.setMap(null);
+  }
 });
 
 watch(
@@ -302,6 +385,7 @@ watch(
       map.panTo(moveLatLon);
       map.setLevel(5); 
       
+      // 구를 바꿀 때 기존 내 위치 핀은 자연스럽게 유지하도록 보존합니다.
       await drawBoundaries();
       await fetchLocations();
       renderMarkers();
@@ -312,16 +396,23 @@ watch(
 
 <template>
   <div class="map-wrap">
-    <div class="legend">
-      <button
-        v-for="cat in CATEGORIES"
-        :key="cat"
-        class="legend-chip"
-        :class="{ inactive: !activeCategories.has(cat) }"
-        :style="{ '--dot': categoryColor(cat) }"
-        @click="toggleCategory(cat)"
-      >
-        <span class="dot"></span>{{ cat }}
+    <div class="map-header-bar">
+      <div class="legend">
+        <button
+          v-for="cat in CATEGORIES"
+          :key="cat"
+          class="legend-chip"
+          :class="{ inactive: !activeCategories.has(cat) }"
+          :style="{ '--dot': categoryColor(cat) }"
+          @click="toggleCategory(cat)"
+        >
+          <span class="dot"></span>{{ cat }}
+        </button>
+      </div>
+
+      <button class="current-location-btn-outer" @click="moveToCurrentLocation" aria-label="현재 위치로 이동">
+        <span class="gps-icon">🎯</span>
+        <span class="gps-text">현재 위치</span>
       </button>
     </div>
 
@@ -332,13 +423,25 @@ watch(
       </div>
 
       <div ref="mapEl" class="kakao-map-el"></div>
-      <p v-if="loading" class="status">숲 구석구석을 둘러보는 중…</p>
+      <p v-if="loading" class="status">위치를 파악하고 있슈… 🌲</p>
       <p v-if="errorMsg" class="status error">{{ errorMsg }}</p>
     </div>
   </div>
 </template>
 
 <style>
+/* 🎯 내 위치 마커의 펄스 퍼짐 애니메이션 정의 */
+@keyframes gpsPulse {
+  0% {
+    transform: scale(1);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(2.8);
+    opacity: 0;
+  }
+}
+
 /* 🌿 카카오 오버레이 전용 스타일 (상위 scoped 스코프 제약을 해제하여 맵 내부에 안전하게 전파) */
 .kakaomap-popup {
   display: none;
@@ -473,10 +576,20 @@ watch(
   gap: 16px;
 }
 
+/* 🌿 [1번 레이아웃] 필터칩과 현재위치 버튼을 한 라인에 양끝으로 배치하는 컨테이너 */
+.map-header-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+}
+
 .legend {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
+  flex: 1;
 }
 
 .legend-chip {
@@ -543,14 +656,44 @@ watch(
   pointer-events: none;
 }
 
-.tree-icon {
+/* 🎯 [1번 디자인] 지도 '바깥'의 필터 라인 옆에 위치한 버튼 스타일 정의 */
+.current-location-btn-outer {
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
+  gap: 6px;
+  padding: 8px 16px;
+  background-color: var(--surface);
+  border: 1.5px solid var(--line);
+  border-radius: 999px;
+  box-shadow: var(--shadow-soft);
+  font-family: 'Cafe24Surround', var(--font-body);
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--forest-700);
+  cursor: pointer;
+  transition: all 0.2s var(--ease-leaf);
+}
+
+.current-location-btn-outer:hover {
+  transform: translateY(-1px);
+  background-color: #f3f9f5;
+  border-color: var(--forest-600);
+  color: var(--forest-900);
+  box-shadow: 0 4px 10px rgba(37, 68, 42, 0.06);
+}
+
+.current-location-btn-outer:active {
+  transform: translateY(0);
+}
+
+.tree-icon, .gps-icon {
   font-size: 15px;
 }
 
-.gu-name {
+.gu-name, .gps-text {
   font-size: 13px;
   font-weight: 800;
-  color: var(--forest-600);
 }
 
 .kakao-map-el {

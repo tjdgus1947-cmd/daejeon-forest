@@ -111,6 +111,7 @@ onMounted(() => {
               placeholder="익명"
             />
           </div>
+
           <div class="field id-field">
             <label for="password">비밀번호</label>
             <input
@@ -122,22 +123,7 @@ onMounted(() => {
           </div>
         </div>
 
-        <!-- 말머리 -->
-        <div v-if="!isEdit" class="field">
-          <label>말머리</label>
-          <div class="tag-group">
-            <button
-              v-for="cat in POST_CATEGORIES"
-              :key="cat"
-              type="button"
-              class="tag-btn"
-              :class="{ active: category === cat }"
-              @click="category = cat"
-            >
-              {{ cat }}
-            </button>
-          </div>
-        </div>
+        
 
         <div class="field">
           <label for="title">제목</label>
@@ -187,6 +173,8 @@ onMounted(() => {
 .form-page h1 {
   font-size: var(--text-2xl);
   margin-bottom: 20px;
+  color : var(--forest-600);
+  text-shadow : none;
 }
 
 .form-card {

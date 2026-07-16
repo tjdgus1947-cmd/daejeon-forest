@@ -2,6 +2,8 @@
 import { computed, ref, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import ChatWidget from "./components/ChatWidget.vue";
+// 🍃 [추가] 새로 제작한 흩날리는 나뭇잎 효과 컴포넌트 불러오기
+import FallingLeaves from "./components/FallingLeaves.vue";
 
 const route = useRoute();
 const router = useRouter();
@@ -41,6 +43,8 @@ onMounted(() => {
 
 <template>
   <div class="app-container">
+    <FallingLeaves />
+
     <header class="global-header">
       <div class="logo-area" @click="goHome">
         <span class="forest-logo">🌳</span>
