@@ -177,11 +177,12 @@ select {
 
 /* 로고 텍스트 */
 .logo-text {
-  font-family: 'Noto Serif KR', serif;
+  font-family: 'Cafe24Surround', 'Noto Serif KR', serif;
   font-weight: 700;
   font-size: 1.15rem;
   color: #ffffff !important; /* 상단바 텍스트는 언제나 선명하게 흰색 고정 */
   letter-spacing: -0.02em;
+  text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.12);
 }
 
 /* 🌙 테마 토글 버튼 스타일 */
@@ -200,7 +201,7 @@ select {
 }
 
 .theme-toggle-btn:hover {
-  background: rgba(255, 255, 255, 0.15) !important;
+  background: rgba(255, 255, 255, 0.89) !important;
   border-color: rgba(255, 255, 255, 0.3) !important;
 }
 

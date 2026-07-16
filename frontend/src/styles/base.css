@@ -1,62 +1,77 @@
 @import "./tokens.css";
+@import url("https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2105_2@1.0/Cafe24Ssurround.woff");
+
+@font-face {
+  font-family: 'Cafe24Surround';
+  src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2105_2@1.0/Cafe24Ssurround.woff') format('woff');
+  font-weight: normal;
+  font-display: swap;
+}
 
 * {
   box-sizing: border-box;
 }
-
 html,
 body,
 #app {
   height: 100%;
 }
-
 body {
   margin: 0;
   background: var(--bg);
   color: var(--forest-900);
-  font-family: var(--font-body);
+  font-family: 'Cafe24Surround', var(--font-body);
   font-size: var(--text-base);
-  line-height: 1.625;
+  line-height: 1.6;
   -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
 }
 
-h1,
-h2,
-h3 {
-  font-family: var(--font-display);
-  color: var(--forest-900);
+/* 대제목 — 랜딩페이지 최상단 타이틀 (모동숲 로고 느낌) */
+h1 {
+  font-family: 'Cafe24Surround', var(--font-display);
+  font-weight: 800;
+  color: var(--surface);
+  text-shadow:
+    1.5px 1.5px 0 rgba(0, 0, 0, 0.18),
+    -1px -1px 0 rgba(0, 0, 0, 0.06);
+  letter-spacing: -0.01em;
   margin: 0 0 0.5em;
   line-height: 1.3;
 }
 
-a {
-  color: inherit;
-  text-decoration: none;
-  transition: color 0.2s var(--ease-leaf);
+/* 중제목 — 게시판 이름표 / 버튼처럼 색 배경 pill로 감싸기 */
+h2,
+h3 {
+  font-family: 'Cafe24Surround', var(--font-display);
+  display: inline-flex;
+  align-items: center;
+  color: var(--surface);
+  background: var(--forest-600);
+  padding: 6px 18px;
+  border-radius: 999px;
+  font-weight: 700;
+  margin: 0 0 0.5em;
+  line-height: 1.3;
+  box-shadow: var(--shadow-soft);
 }
 
+a {
+  color: inherit;
+}
 button {
   font-family: inherit;
   cursor: pointer;
-  border: none;
-  outline: none;
 }
-
 input,
 textarea {
   font-family: inherit;
   font-size: var(--text-base);
-  outline: none;
-  transition: border-color 0.2s var(--ease-leaf), box-shadow 0.2s var(--ease-leaf);
 }
-
-/* 🌿 접근성 높은 포커스 링 - 키보드 내비게이션 전용 */
+/* 키보드 포커스 표시 — 접근성 */
 :focus-visible {
   outline: 2px solid var(--sun-500);
   outline-offset: 2px;
 }
-
 /* 모션 최소화 설정 존중 */
 @media (prefers-reduced-motion: reduce) {
   * {
@@ -65,117 +80,72 @@ textarea {
     transition-duration: 0.01ms !important;
   }
 }
-
 .container {
   max-width: 960px;
   margin: 0 auto;
   padding: 0 20px;
 }
-
-/* 버튼 컴포넌트 마이크로 모션 이펙트 */
 .btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 6px;
   padding: 12px 22px;
-  border-radius: var(--radius-md);
+  border-radius: 999px;
+  border: none;
+  font-family: 'Cafe24Surround', var(--font-body);
   font-size: var(--text-base);
   font-weight: 600;
-  transition: transform 0.25s var(--ease-leaf), box-shadow 0.25s var(--ease-leaf), background-color 0.2s var(--ease-leaf), color 0.2s var(--ease-leaf);
+  transition: transform 0.18s var(--ease-leaf), box-shadow 0.18s var(--ease-leaf);
 }
-
+.btn:active {
+  transform: translateY(1px);
+}
 .btn-primary {
   background: var(--forest-600);
   color: white;
   box-shadow: var(--shadow-soft);
 }
-
 .btn-primary:hover {
-  background: var(--forest-700);
-  transform: translateY(-1.5px); /* 미세하게 살포시 떠오르는 볼륨감 */
   box-shadow: var(--shadow-lift);
 }
-
-.btn-primary:active {
-  transform: translateY(0.5px); /* 클릭할 때 묵직하게 눌림 */
-  box-shadow: var(--shadow-active);
-}
-
 .btn-ghost {
-  background: var(--surface);
+  background: transparent;
   color: var(--forest-700);
-  border: 1.5px solid var(--line);
+  border: 1px solid var(--line);
 }
-
 .btn-ghost:hover {
   background: var(--surface-alt);
-  border-color: var(--forest-600);
-  color: var(--forest-900);
-  transform: translateY(-1px);
 }
-
-.btn-ghost:active {
-  transform: translateY(0px);
-}
-
 .btn-danger {
   background: var(--danger-bg);
   color: var(--danger);
-  border: 1.5px solid rgba(179, 63, 42, 0.15);
 }
-
-.btn-danger:hover {
-  background: #f8ded9;
-  transform: translateY(-1px);
-}
-
-.btn-danger:active {
-  transform: translateY(0px);
-}
-
-/* 카드 컴포넌트 고도화 */
 .card {
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-soft);
-  transition: transform 0.3s var(--ease-leaf), box-shadow 0.3s var(--ease-leaf);
 }
-
-/* 인풋 필드 UX 셰이핑 */
 .field {
   display: flex;
   flex-direction: column;
   gap: 6px;
   margin-bottom: 16px;
 }
-
 .field label {
   font-size: var(--text-sm);
-  font-weight: 700;
+  font-weight: 600;
   color: var(--forest-700);
-  letter-spacing: -0.01em;
 }
-
 .field input,
 .field textarea {
-  padding: 12px 16px;
-  border: 1.5px solid var(--line);
+  padding: 10px 14px;
+  border: 1px solid var(--line);
   border-radius: var(--radius-sm);
   background: var(--surface);
-  color: var(--forest-900);
-  box-shadow: inset 0 1px 2px rgba(18, 33, 22, 0.01);
 }
-
-/* 🌿 인풋에 포커스가 잡힐 때, 우아한 세이지 컬러 글로우 효과를 부여합니다. */
 .field input:focus,
 .field textarea:focus {
   border-color: var(--moss-400);
-  box-shadow: 0 0 0 3.5px rgba(85, 123, 107, 0.15);
-}
-
-.field input::placeholder,
-.field textarea::placeholder {
-  color: var(--line);
 }
