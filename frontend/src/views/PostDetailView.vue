@@ -41,7 +41,8 @@ function goEdit() {
 async function confirmDelete(password) {
   try {
     await client.delete(`/api/boards/${props.id}`, { data: { board_password: password } });
-    router.push({ name: "district", params: { gu: props.gu } });
+    // 💡 여기서도 삭제 완료 후 게시판 탭으로 가도록 query를 추가해 줍니다!
+    router.push({ name: "district", params: { gu: props.gu }, query: { tab: "board" } });
   } catch (e) {
     deleteModalRef.value?.showError("비밀번호가 일치하지 않습니다.");
   }
@@ -128,7 +129,7 @@ onMounted(load);
 <template>
   <main class="detail-page">
     <div class="container" v-if="!loading && post">
-      <button class="back-btn" @click="router.push({ name: 'district', params: { gu } })">
+      <button class="back-btn" @click="router.push({ name: 'district', params: { gu }, query: { tab: 'board' } })">
         ← 목록으로
       </button>
 
