@@ -1,130 +1,451 @@
-"""
-챗봇 API (RFP III-3)
-- POST /api/chat: 제공 JSON(=DB에 적재된 locations/boards) 기반 자연어 지역 정보 질의응답
-- 주요 질의 유형: 관광지/맛집 추천, 축제 일정, 모범음식점 위치, 커뮤니티 게시글 검색
-- 정확한 최신 데이터 답변을 위해 "DB 검색 결과를 컨텍스트로 넣고 LLM이 자연어로 정리"하는
-  간단한 RAG(검색 증강 생성) 구조를 사용한다. (임베딩 없이 키워드 매칭으로 단순화 — 3일 일정 고려)
-"""
 import os
+from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+from sqlalchemy import func, or_
 from openai import OpenAI
 
 from app.database import get_db
-from app import models, schemas
+from app import schemas, models
 
-router = APIRouter(prefix="/api/chat", tags=["chat"])
 
-_client: OpenAI | None = None
+router = APIRouter(
+    prefix="/api/chat",
+    tags=["chat"]
+)
 
-# TourAPI contenttypeid 코드 -> 한글 키워드 매핑 (실제 데이터 값 확인 후 조정 필요)
-CATEGORY_MAP = {
-    "맛집": "39", "밥집": "39", "식당": "39",
-    "축제": "15", "행사": "15",
-    "숙소": "32", "호텔": "32",
-    "놀거리": "28", "액티비티": "28",
-    "구경": "12", "여행": "12",
+
+# =========================
+# OpenAI Client Lazy Init
+# =========================
+
+_client = None
+
+
+def get_openai_client():
+    global _client
+
+    if _client is None:
+        api_key = os.getenv("OPENAI_API_KEY")
+
+        if not api_key:
+            raise RuntimeError(
+                "OPENAI_API_KEY가 설정되어 있지 않습니다."
+            )
+
+        _client = OpenAI(api_key=api_key)
+
+    return _client
+
+
+
+# =========================
+# Chatbot 검색 설정
+# =========================
+
+TYPE_MAP = {
+    "12": "관광지",
+    "14": "문화시설",
+    "15": "축제행사",
+    "32": "숙박",
+    "38": "쇼핑",
+    "39": "음식점",
 }
 
 
-def get_openai_client() -> OpenAI:
-    """OpenAI 클라이언트를 요청 시점에 생성(lazy init).
-    모듈 임포트 시점에 생성하면 .env 로딩 전이거나 키가 없을 때 서버 전체가 뜨지 않는 문제가 있어 회피."""
-    global _client
-    if _client is None:
-        api_key = os.getenv("OPENAI_API_KEY")
-        if not api_key:
-            raise RuntimeError("OPENAI_API_KEY가 .env에 설정되어 있지 않습니다.")
-        _client = OpenAI(api_key=api_key)
-    return _client
+CATEGORY_KEYWORD_MAP = {
+    "39": [
+        "맛집",
+        "식당",
+        "카페",
+        "음식",
+        "먹을"
+    ],
 
-SYSTEM_PROMPT = """당신은 '모여라 대전의 숲' 서비스의 지역 정보 안내 챗봇입니다.
-아래 규칙을 반드시 지키세요.
-1. 반드시 제공된 [검색된 데이터] 안의 정보만 근거로 답변하세요. 모르면 모른다고 답하세요.
-2. 장소를 추천할 때는 이름과 주소를 함께 안내하세요.
-3. 친근한 존댓말로, 3~5문장 이내로 간결하게 답변하세요.
-"""
+    "12": [
+        "관광",
+        "명소",
+        "볼거리"
+    ],
+
+    "15": [
+        "축제",
+        "행사",
+        "공연"
+    ],
+
+    "32": [
+        "숙박",
+        "호텔",
+        "모텔",
+        "펜션"
+    ],
+
+    "38": [
+        "쇼핑",
+        "시장",
+        "백화점"
+    ],
+
+    "14": [
+        "박물관",
+        "미술관",
+        "전시"
+    ]
+}
 
 
-def _search_locations(db: Session, query: str, limit: int = 5):
-    """아주 단순한 키워드 기반 검색 (title/addr1/contenttypeid에 매칭)"""
-    like = f"%{query}%"
-    results = (
-        db.query(models.Location)
-        .filter(
-            (models.Location.title.like(like))
-            | (models.Location.addr1.like(like))
-        )
-        .limit(limit)
-        .all()
-    )
-    # 매칭이 없으면 카테고리 키워드로 폭넓게 재시도 (예: "맛집" -> contenttypeid "39")
+JOSA_LIST = [
+    "에게서",
+    "으로써",
+    "으로서",
+    "에서는",
+    "에게",
+    "한테",
+    "까지",
+    "부터",
+    "은",
+    "는",
+    "이",
+    "가",
+    "을",
+    "를",
+    "의",
+    "도",
+    "만",
+    "와",
+    "과",
+    "로",
+    "에"
+]
+
+
+def strip_josa(word: str):
+
+    for josa in JOSA_LIST:
+
+        if word.endswith(josa) and len(word) - len(josa) >= 2:
+            return word[:-len(josa)]
+
+    return word
+
+
+
+# =========================
+# DB 검색(RAG)
+# =========================
+
+
+def format_results(results):
+
     if not results:
-        for kw, code in CATEGORY_MAP.items():
-            if kw in query:
-                results = (
-                    db.query(models.Location)
-                    .filter(models.Location.contenttypeid == code)
-                    .limit(limit)
-                    .all()
-                )
-                break
-    return results
+        return "조회된 관련 대전 정보가 없습니다."
 
 
-def _search_boards(db: Session, query: str, limit: int = 5):
-    """커뮤니티 게시글 검색 (RFP III-3-나 '커뮤니티 게시글 검색' 대응)"""
-    like = f"%{query}%"
-    return (
-        db.query(models.Board)
-        .filter((models.Board.title.like(like)) | (models.Board.content.like(like)))
-        .order_by(models.Board.created_at.desc())
-        .limit(limit)
-        .all()
-    )
-
-
-def _build_context(locations, boards) -> str:
     lines = []
-    if locations:
-        lines.append("[장소 정보]")
-        for loc in locations:
-            lines.append(f"- {loc.title} | {loc.addr1} | 전화: {loc.tel or '정보없음'}")
-    if boards:
-        lines.append("[관련 게시글]")
-        for b in boards:
-            lines.append(f"- 제목: {b.title} / 내용요약: {b.content[:60]}")
-    if not lines:
-        lines.append("검색된 데이터가 없습니다. 사용자에게 다른 키워드로 질문해달라고 안내하세요.")
+
+    for loc in results:
+
+        category = TYPE_MAP.get(
+            loc.contenttypeid,
+            "추천장소"
+        )
+
+        text = (
+            f"- {loc.title} "
+            f"({category}) "
+            f"| 주소: {loc.addr1}"
+        )
+
+        if loc.tel:
+            text += f" | 전화: {loc.tel}"
+
+
+        lines.append(text)
+
+
     return "\n".join(lines)
 
 
-@router.post("", response_model=schemas.ChatResponse)
-def chat(payload: schemas.ChatRequest, db: Session = Depends(get_db)):
-    locations = _search_locations(db, payload.message)
-    boards = _search_boards(db, payload.message)
-    context = _build_context(locations, boards)
 
-    messages = [{"role": "system", "content": SYSTEM_PROMPT}]
-    messages.extend(payload.history[-6:])
-    messages.append(
-        {
-            "role": "user",
-            "content": f"[검색된 데이터]\n{context}\n\n[사용자 질문]\n{payload.message}",
-        }
+def retrieve_chatbot_context(
+        query: str,
+        db: Session
+):
+
+    districts = [
+        "유성구",
+        "서구",
+        "중구",
+        "동구",
+        "대덕구"
+    ]
+
+
+    target_district = None
+
+    for district in districts:
+
+        if district in query:
+            target_district = district
+            break
+
+
+
+    target_type = None
+
+    category_words = set()
+
+
+    for tid, words in CATEGORY_KEYWORD_MAP.items():
+
+        category_words.update(words)
+
+        if any(word in query for word in words):
+
+            target_type = tid
+
+
+
+    stopwords = {
+
+        "주소",
+        "알려줘",
+        "알려주세요",
+        "어디",
+        "위치",
+        "추천",
+        "추천해줘",
+        "궁금",
+        "있어",
+        "해주세요"
+
+    } | category_words
+
+
+
+    keywords = []
+
+
+    for word in query.split():
+
+        if len(word) < 2:
+            continue
+
+
+        if word in districts:
+            continue
+
+
+        word = strip_josa(word)
+
+
+        if word in stopwords:
+            continue
+
+
+        keywords.append(word)
+
+
+
+    keywords = list(dict.fromkeys(keywords))
+
+
+
+    query_builder = db.query(
+        models.ChatbotLocation
     )
+
+
+
+    if target_district:
+
+        query_builder = query_builder.filter(
+            models.ChatbotLocation.addr1.ilike(
+                f"%{target_district}%"
+            )
+        )
+
+
+    if target_type:
+
+        query_builder = query_builder.filter(
+            models.ChatbotLocation.contenttypeid
+            == target_type
+        )
+
+
+
+    if keywords:
+
+        conditions = []
+
+        for kw in keywords:
+
+            conditions.append(
+                func.replace(
+                    models.ChatbotLocation.title,
+                    " ",
+                    ""
+                )
+                .ilike(
+                    f"%{kw.replace(' ','')}%"
+                )
+            )
+
+
+        query_builder = query_builder.filter(
+            or_(*conditions)
+        )
+
+
+
+    results = query_builder.limit(5).all()
+
+
+    print(
+        "[CHATBOT SEARCH RESULT]",
+        len(results)
+    )
+
+
+    return format_results(results)
+
+
+
+# =========================
+# Chat API
+# =========================
+
+
+@router.post(
+    "",
+    response_model=schemas.ChatResponse
+)
+def chat(
+    payload: schemas.ChatRequest,
+    db: Session = Depends(get_db)
+):
+
 
     try:
-        client = get_openai_client()
-    except RuntimeError as e:
-        raise HTTPException(status_code=500, detail=str(e))
 
-    response = client.chat.completions.create(
-        model="gpt-4o-mini",
-        messages=messages,
-        temperature=0.3,
-        max_tokens=400,
-    )
-    reply = response.choices[0].message.content
-    return schemas.ChatResponse(reply=reply)
+        context = retrieve_chatbot_context(
+            payload.message,
+            db
+        )
+
+
+
+        system_instruction = f"""
+너는 대전광역시 AI 관광가이드 '성심이'야.
+
+규칙:
+
+- 항상 답변 첫 문장은
+"안녕하세요 꿈돌이입니다!"
+로 시작한다.
+
+- 충청도 사투리를 자연스럽게 섞는다.
+(~해유, ~했슈)
+
+- 친절하고 짧게 설명한다.
+
+- 사용자의 질문은 아래 대전 정보 기반으로 답한다.
+
+- 없는 정보는 만들어내지 않는다.
+
+- 정보가 없으면
+"해당 질문은 잘 모르겠어유. 다른 질문도 물어봐주세유!"
+라고 답한다.
+
+
+[대전 지역 정보]
+
+{context}
+
+"""
+
+
+
+        messages = [
+            {
+                "role": "system",
+                "content": system_instruction
+            }
+        ]
+
+
+
+        for msg in payload.history[-6:]:
+
+            messages.append(
+                {
+                    "role": msg.get(
+                        "role",
+                        "user"
+                    ),
+
+                    "content": msg.get(
+                        "content",
+                        ""
+                    )
+                }
+            )
+
+
+
+        messages.append(
+            {
+                "role": "user",
+                "content": payload.message
+            }
+        )
+
+
+
+        client = get_openai_client()
+
+
+
+        response = client.chat.completions.create(
+
+            model="gpt-5-mini",
+
+            messages=messages,
+
+            max_completion_tokens=1000
+
+        )
+
+
+        reply = response.choices[0].message.content
+
+
+
+        if not reply:
+
+            reply = (
+                "앗 답변 준비 중 문제가 생겼어유. "
+                "다시 한번 물어봐주세유!"
+            )
+
+
+
+        return schemas.ChatResponse(
+            reply=reply
+        )
+
+
+
+    except Exception as e:
+
+        import traceback
+
+        traceback.print_exc()
+
+        raise HTTPException(
+            status_code=500,
+            detail=str(e)
+        )
