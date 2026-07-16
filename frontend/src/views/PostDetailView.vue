@@ -129,8 +129,8 @@ onMounted(load);
 <template>
   <main class="detail-page">
     <div class="container" v-if="!loading && post">
-      <button class="back-btn" @click="router.push({ name: 'district', params: { gu }, query: { tab: 'board' } })">
-        ← 지도로
+      <button class="back-btn" @click="router.push({ name: 'district', params: { props.gu }, query: { tab: 'board' } })">
+        ← 목록으로
       </button>
 
       <article class="card post-card">
