@@ -171,6 +171,8 @@ onMounted(() => {
 }
 
 .form-page h1 {
+  color: var(--forest-600);
+  text-shadow: none;
   font-size: var(--text-2xl);
   margin-bottom: 20px;
   color : var(--forest-600);

@@ -116,7 +116,7 @@
     flex-direction: column;
     align-items: flex-end;
     gap: 16px;
-    font-family: var(--font-body);
+    font-family: 'Cafe24Surround', var(--font-body);
   }
 
   /* 🌿 둥글고 생동감 넘치는 호버 모션이 들어간 FAB */

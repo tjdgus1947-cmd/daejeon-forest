@@ -107,6 +107,14 @@ async function drawBoundaries() {
         polygonObj: polygon
       });
 
+      // 💡 현재 선택된 구라면, 그 구의 경계 전체가 화면에 딱 맞게 보이도록 지도 범위 조정
+      if (isCurrentGu) {
+        const bounds = new kakao.maps.LatLngBounds();
+        path.forEach((latlng) => bounds.extend(latlng));
+        map.setBounds(bounds, 0,0,0,0); // 30 → 10으로 축소 // 상하좌우 30px 여백
+      }
+
+
       // 마우스 이벤트 바인딩
       kakao.maps.event.addListener(polygon, 'mouseover', () => {
         if (name !== props.gu) {
