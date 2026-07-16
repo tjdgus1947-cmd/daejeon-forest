@@ -201,6 +201,7 @@ function renderMarkers() {
       position: position,
       content: markerContent,
       yAnchor: 0.5
+      clickable: true
     });
     
     customMarker.setMap(map);
@@ -232,6 +233,7 @@ function renderMarkers() {
       position: position,
       content: overlayContent,
       yAnchor: 1.05
+      clickable: true
     });
 
     detailOverlay.setMap(map);
