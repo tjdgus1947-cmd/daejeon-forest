@@ -200,8 +200,7 @@ function renderMarkers() {
     const customMarker = new kakao.maps.CustomOverlay({
       position: position,
       content: markerContent,
-      yAnchor: 0.5,
-      clickable: true
+      yAnchor: 0.5
     });
     
     customMarker.setMap(map);
@@ -222,7 +221,7 @@ function renderMarkers() {
           <span class="popup-cat" style="color: ${pinColor};">${hangulCategory}</span>
           <strong class="popup-title">${loc.title}</strong>
           <span class="popup-addr">${loc.addr1 || "주소 정보 없음"}</span>
-          <a href="${kakaoSearchUrl(loc.title, loc.addr1)}" target="_blank" rel="noopener noreferrer" class="popup-link">
+          <a href="${kakaoSearchUrl(loc.title, loc.addr1)}" target="_blank" class="popup-link">
             카카오맵으로 자세히 보기 →
           </a>
         </div>
@@ -232,19 +231,11 @@ function renderMarkers() {
     const detailOverlay = new kakao.maps.CustomOverlay({
       position: position,
       content: overlayContent,
-      yAnchor: 1.05,
-      clickable: true
+      yAnchor: 1.05
     });
 
     detailOverlay.setMap(map);
     currentCustomOverlays.push(detailOverlay);
-
-    overlayContent.addEventListener('click', (e) => {
-      e.stopPropagation();
-    });
-    overlayContent.addEventListener('touchstart', (e) => {
-      e.stopPropagation();
-    }, { passive: true });
 
     markerContent.addEventListener('click', () => {
       document.querySelectorAll('.kakaomap-popup').forEach(el => el.style.display = 'none');

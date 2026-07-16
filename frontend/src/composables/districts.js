@@ -36,10 +36,3 @@ export function categoryColor(category) {
   };
   return map[category] || "var(--moss-400)";
 }
-
-/** 구 이름으로 DISTRICTS 배열에서 중심 좌표({ lat, lng })를 찾아 반환합니다. */
-export function getDistrictCenter(guName) {
-  const district = DISTRICTS.find((d) => d.name === guName);
-  if (!district) return null;
-  return { lat: district.lat, lng: district.lng };
-}
