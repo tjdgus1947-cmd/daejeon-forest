@@ -4,9 +4,9 @@ import { useRoute, useRouter } from "vue-router";
 
 // 🚀 [경로 안전화] 상대 경로가 틀렸을 수 있으므로 기존 프로젝트 폴더 구조에 맞게 수정합니다.
 // 만약 원래 쓰시던 KakaoMap 컴포넌트가 @/components/KakaoMap.vue 라면 그렇게 바꾸셔도 좋습니다.
-import KakaoMap from "../components/KakaoMap.vue"; 
-import BoardList from "../components/BoardList.vue"; 
-import { getDistrictCenter } from "../composables/districts"; 
+import KakaoMap from "@/components/KakaoMap.vue"; 
+import BoardList from "@/components/BoardList.vue"; 
+import { getDistrictCenter } from "@/composables/districts"; 
 
 const route = useRoute();
 const router = useRouter();
