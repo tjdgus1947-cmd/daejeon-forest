@@ -2,17 +2,20 @@
 
 <script setup>
 import { ref, computed } from "vue";
-import { useRouter } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import { DISTRICTS } from "../composables/districts";
 import MapPins from "../components/MapPins.vue";
 import PostList from "../components/PostList.vue";
+
 
 const props = defineProps({
   gu: { type: String, required: true },
 });
 
+const route = useRoute(); 
 const router = useRouter();
-const tab = ref("map"); // 'map' | 'board'
+const tab = ref(route.query.tab === "board" ? "board" : "map");
+
 
 const district = computed(
   () => DISTRICTS.find((d) => d.name === props.gu) || DISTRICTS[0]
