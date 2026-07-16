@@ -221,7 +221,7 @@ function renderMarkers() {
           <span class="popup-cat" style="color: ${pinColor};">${hangulCategory}</span>
           <strong class="popup-title">${loc.title}</strong>
           <span class="popup-addr">${loc.addr1 || "주소 정보 없음"}</span>
-          <a href="${kakaoSearchUrl(loc.title, loc.addr1)}" target="_blank" class="popup-link">
+          <a href="${kakaoSearchUrl(loc.title, loc.addr1)}" class="popup-link">
             카카오맵으로 자세히 보기 →
           </a>
         </div>
