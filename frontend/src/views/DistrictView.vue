@@ -1,12 +1,9 @@
 <script setup>
-import { ref, watch, onMounted, nextTick } from "vue";
+import { ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
-
-// 🚀 [경로 안전화] 상대 경로가 틀렸을 수 있으므로 기존 프로젝트 폴더 구조에 맞게 수정합니다.
-// 만약 원래 쓰시던 KakaoMap 컴포넌트가 @/components/KakaoMap.vue 라면 그렇게 바꾸셔도 좋습니다.
-import KakaoMap from "../components/KakaoMap.vue"; 
-import BoardList from "../components/BoardList.vue"; 
-import { getDistrictCenter } from "../composables/districts"; 
+import MapPins from "../components/MapPins.vue";
+import BoardList from "../components/BoardList.vue";
+import { getDistrictCenter } from "../composables/districts";
 
 const route = useRoute();
 const router = useRouter();
@@ -70,12 +67,11 @@ watch(
         </button>
       </div>
     </div>
-
     <div class="tab-content">
       <div v-show="activeTab === 'map'">
-        <KakaoMap :gu="gu" :center="center" />
+        <MapPins :gu="gu" :center="center" />
       </div>
-      
+
       <div v-show="activeTab === 'board'">
         <BoardList :gu="gu" />
       </div>
@@ -84,25 +80,21 @@ watch(
 </template>
 
 <style scoped>
-/* 🚀 [에러 방지 스타일] 존재하지 않는 CSS 변수로 인해 빌드가 실패하지 않도록 기존 안전한 값들로 대체했습니다. */
 .district-page {
   width: 100%;
   max-width: 1200px;
   margin: 0 auto;
   padding: 20px;
 }
-
 .tab-header {
   display: flex;
   margin-bottom: 20px;
-  border-bottom: 2px solid #e2e8f0; /* var(--line) 대신 표준 색상 코드 대입 */
+  border-bottom: 2px solid #e2e8f0;
 }
-
 .tab-buttons {
   display: flex;
   gap: 12px;
 }
-
 .tab-btn {
   padding: 10px 20px;
   font-size: 16px;
@@ -110,17 +102,14 @@ watch(
   background: none;
   border: none;
   cursor: pointer;
-  color: #718096; /* 표준 색상 코드 대입 */
+  color: #718096;
   border-bottom: 3px solid transparent;
   transition: all 0.2s ease;
 }
-
-/* 활성화된 탭 스타일 (초록색 포인트 컬러 예시) */
 .tab-btn.active {
-  color: #2f5233; /* var(--forest-900) 대신 표준 색상 코드 대입 */
+  color: #2f5233;
   border-bottom-color: #2f5233;
 }
-
 .tab-content {
   margin-top: 15px;
 }

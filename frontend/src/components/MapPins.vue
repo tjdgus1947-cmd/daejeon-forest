@@ -200,7 +200,7 @@ function renderMarkers() {
     const customMarker = new kakao.maps.CustomOverlay({
       position: position,
       content: markerContent,
-      yAnchor: 0.5
+      yAnchor: 0.5,
       clickable: true
     });
     
@@ -232,7 +232,7 @@ function renderMarkers() {
     const detailOverlay = new kakao.maps.CustomOverlay({
       position: position,
       content: overlayContent,
-      yAnchor: 1.05
+      yAnchor: 1.05,
       clickable: true
     });
 
