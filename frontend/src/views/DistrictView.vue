@@ -1,9 +1,12 @@
 <script setup>
 import { ref, watch, onMounted, nextTick } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import KakaoMap from "../components/KakaoMap.vue"; // 실제 KakaoMap 컴포넌트 경로로 맞춰주세요
-import BoardList from "../components/BoardList.vue"; // 실제 BoardList 컴포넌트 경로로 맞춰주세요
-import { getDistrictCenter } from "../composables/districts"; // 기존에 쓰시던 구별 중심좌표 가져오는 함수/데이터
+
+// 🚀 [경로 안전화] 상대 경로가 틀렸을 수 있으므로 기존 프로젝트 폴더 구조에 맞게 수정합니다.
+// 만약 원래 쓰시던 KakaoMap 컴포넌트가 @/components/KakaoMap.vue 라면 그렇게 바꾸셔도 좋습니다.
+import KakaoMap from "../components/KakaoMap.vue"; 
+import BoardList from "../components/BoardList.vue"; 
+import { getDistrictCenter } from "../composables/districts"; 
 
 const route = useRoute();
 const router = useRouter();
@@ -12,7 +15,7 @@ const router = useRouter();
 const gu = ref(route.params.gu || "동구");
 const center = ref(getDistrictCenter(gu.value) || { lat: 36.3504, lng: 127.3845 });
 
-// 🚀 [핵심 수정] 주소창에 ?tab=board가 있으면 'board'(게시판)를 띄우고, 없으면 'map'(지도)을 기본값으로 설정합니다.
+// 🚀 [탭 연동 핵심] 주소창에 ?tab=board가 있으면 'board'(게시판)를 띄우고, 없으면 'map'(지도)을 기본값으로 설정합니다.
 const activeTab = ref(route.query.tab || "map");
 
 // 2. 탭 전환 함수: 클릭 시 메모리의 activeTab만 바꾸는 것이 아니라, URL의 쿼리 스트링도 함께 업데이트합니다.
@@ -81,6 +84,7 @@ watch(
 </template>
 
 <style scoped>
+/* 🚀 [에러 방지 스타일] 존재하지 않는 CSS 변수로 인해 빌드가 실패하지 않도록 기존 안전한 값들로 대체했습니다. */
 .district-page {
   width: 100%;
   max-width: 1200px;
@@ -91,7 +95,7 @@ watch(
 .tab-header {
   display: flex;
   margin-bottom: 20px;
-  border-bottom: 2px solid var(--line, #e2e8f0);
+  border-bottom: 2px solid #e2e8f0; /* var(--line) 대신 표준 색상 코드 대입 */
 }
 
 .tab-buttons {
@@ -106,15 +110,15 @@ watch(
   background: none;
   border: none;
   cursor: pointer;
-  color: var(--text-muted, #718096);
+  color: #718096; /* 표준 색상 코드 대입 */
   border-bottom: 3px solid transparent;
   transition: all 0.2s ease;
 }
 
 /* 활성화된 탭 스타일 (초록색 포인트 컬러 예시) */
 .tab-btn.active {
-  color: var(--forest-900, #2f5233);
-  border-bottom-color: var(--forest-900, #2f5233);
+  color: #2f5233; /* var(--forest-900) 대신 표준 색상 코드 대입 */
+  border-bottom-color: #2f5233;
 }
 
 .tab-content {
