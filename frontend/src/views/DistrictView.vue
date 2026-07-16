@@ -2,7 +2,7 @@
 import { ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import MapPins from "../components/MapPins.vue";
-import BoardList from "../components/BoardList.vue";
+import PostList from "../components/PostList.vue";
 import { getDistrictCenter } from "../composables/districts";
 
 const route = useRoute();
@@ -73,7 +73,7 @@ watch(
       </div>
 
       <div v-show="activeTab === 'board'">
-        <BoardList :gu="gu" />
+        <PostList :gu="gu" />
       </div>
     </div>
   </div>
