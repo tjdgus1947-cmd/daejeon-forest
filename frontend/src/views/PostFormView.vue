@@ -111,6 +111,7 @@ onMounted(() => {
               placeholder="익명"
             />
           </div>
+
           <div class="field id-field">
             <label for="password">비밀번호</label>
             <input
@@ -123,7 +124,6 @@ onMounted(() => {
         </div>
 
         
-      
 
         <div class="field">
           <label for="title">제목</label>
@@ -175,6 +175,8 @@ onMounted(() => {
   text-shadow: none;
   font-size: var(--text-2xl);
   margin-bottom: 20px;
+  color : var(--forest-600);
+  text-shadow : none;
 }
 
 .form-card {

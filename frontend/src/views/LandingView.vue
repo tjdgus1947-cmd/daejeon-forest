@@ -114,9 +114,15 @@ function selectDistrict(guName) {
 
 .sub {
   color: rgba(255, 255, 255, 0.82);
-  max-width: 420px;
+  max-width: 600px;
   margin: 0 auto;
   font-size: var(--text-lg);
+}
+
+ @media (max-width: 480px) {
+  .sub {
+    white-space: normal;
+  }
 }
 
 .divider {
