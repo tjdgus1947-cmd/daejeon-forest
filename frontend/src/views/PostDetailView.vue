@@ -15,12 +15,12 @@ const post = ref(null);
 const loading = ref(true);
 const commentNickname = ref("");
 const commentText = ref("");
-const commentPassword = ref(""); // 💡 댓글 등록용 비밀번호 변수 추가!
+const commentPassword = ref(""); // 💡 댓글 등록용 비밀번호 변수
 
 const showDeleteModal = ref(false);
 const deleteModalRef = ref(null);
 
-// 💡 댓글 수정/삭제용 상태 관리 변수 추가
+// 💡 댓글 수정/삭제용 상태 관리 변수
 const activeCommentId = ref(null);         // 현재 작업 중인 댓글 ID
 const commentActionType = ref("");         // "edit" | "delete"
 const showCommentModal = ref(false);       // 댓글 비밀번호 모달 표시 여부
@@ -38,10 +38,10 @@ function goEdit() {
   router.push({ name: "post-edit", params: { gu: props.gu, id: props.id } });
 }
 
+// 🚀 [수정] 게시글 삭제 성공 시, 원래 구의 '게시판(board)' 탭으로 이동하도록 query 추가
 async function confirmDelete(password) {
   try {
     await client.delete(`/api/boards/${props.id}`, { data: { board_password: password } });
-    // 💡 여기서도 삭제 완료 후 게시판 탭으로 가도록 query를 추가해 줍니다!
     router.push({ name: "district", params: { gu: props.gu }, query: { tab: "board" } });
   } catch (e) {
     deleteModalRef.value?.showError("비밀번호가 일치하지 않습니다.");
@@ -129,8 +129,8 @@ onMounted(load);
 <template>
   <main class="detail-page">
     <div class="container" v-if="!loading && post">
-      <button class="back-btn" @click="router.push({ name: 'district', params: { props.gu }, query: { tab: 'board' } })">
-        ← 목록으로
+      <button class="back-btn" @click="router.push({ name: 'district', params: { gu }, query: { tab: 'board' } })">
+        ← 지도로
       </button>
 
       <article class="card post-card">
@@ -227,6 +227,7 @@ onMounted(load);
   font-weight: 600;
   margin-bottom: 16px;
   padding: 0;
+  cursor: pointer;
 }
 
 .post-card {
@@ -319,7 +320,7 @@ onMounted(load);
   padding-right: 16px;
 }
 
-/* 💡 댓글 조작 스타일 추가 */
+/* 💡 댓글 조작 스타일 */
 .comment-actions {
   display: flex;
   gap: 8px;
@@ -356,7 +357,7 @@ onMounted(load);
   border-radius: var(--radius-sm);
 }
 
-/* 💡 비밀번호 인풋 스타일 추가 */
+/* 💡 비밀번호 인풋 스타일 */
 .comment-pass {
   width: 124px;
   flex-shrink: 0;
