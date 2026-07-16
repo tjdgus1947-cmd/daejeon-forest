@@ -1,0 +1,48 @@
+/*
+  디자인 토큰 — "모여라 대전의 숲" 브랜드 시스템
+  컨셉: 대전의 다섯 개 구를 "다섯 그루의 나무가 이룬 숲"으로 표현.
+  팔레트: 짙은 숲 그린(텍스트/브랜드) + 옅은 잎사귀 화이트(배경) + 볕뉘(햇살) 앰버 하나만 강조색으로.
+  타이포: 헤드라인은 Noto Serif KR(숲의 이야기를 들려주는 느낌), 본문/UI는 Pretendard(가독성).
+*/
+:root {
+  /* Color */
+  --bg: #eaf6f6;
+  --surface: #ffffff;
+  --surface-alt: #dcf0e8;
+  --forest-900: #2d5a3d;
+  --forest-700: #3f7a4f;
+  --forest-600: #4f9860;
+  --moss-400: #8bc4a0;
+  --sun-500: #ffc94d;
+  --sun-600: #ffb020;
+  --line: #cdeae0;
+  --danger: #f0806a;
+  --danger-bg: #fdeae5;
+  /* 카테고리 색상 (지도 핀 / 게시판 태그 공용) */
+  --cat-관광지: #4f9860;
+  --cat-문화시설: #6ea8d8;
+  --cat-축제공연행사: #ffc94d;
+  --cat-여행코스: #8bc4a0;
+  --cat-레포츠: #5cc2b0;
+  --cat-숙박: #d8946f;
+  --cat-쇼핑: #e08fc0;
+  --cat-음식점: #f0806a;
+  /* Typography */
+  --font-display: "Noto Serif KR", serif;
+  --font-body: "Pretendard", -apple-system, BlinkMacSystemFont, sans-serif;
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.375rem;
+  --text-2xl: 1.875rem;
+  --text-3xl: 2.5rem;
+  /* Radius & shadow */
+  --radius-sm: 12px;
+  --radius-md: 20px;
+  --radius-lg: 32px;
+  --shadow-soft: 0 4px 20px rgba(45, 90, 61, 0.10);
+  --shadow-lift: 0 10px 30px rgba(45, 90, 61, 0.16);
+  /* Motion */
+  --ease-leaf: cubic-bezier(0.22, 1, 0.36, 1);
+}
