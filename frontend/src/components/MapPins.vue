@@ -111,7 +111,7 @@ async function drawBoundaries() {
       if (isCurrentGu) {
         const bounds = new kakao.maps.LatLngBounds();
         path.forEach((latlng) => bounds.extend(latlng));
-        map.setBounds(bounds, 0,0,0,0); // 30 → 10으로 축소 // 상하좌우 30px 여백
+        map.setBounds(bounds, 0,0,0,0);
       }
 
 
@@ -213,7 +213,6 @@ function renderMarkers() {
     const overlayContent = document.createElement('div');
     overlayContent.className = 'kakaomap-popup';
     
-    // 💡 [디자인 혁신] 인라인 style.cssText를 과감히 제거하고 전용 스코프 스타일 클래스로 대체합니다!
     overlayContent.innerHTML = `
       <div class="popup-box">
         <button class="close-btn">×</button>
@@ -232,7 +231,7 @@ function renderMarkers() {
     const detailOverlay = new kakao.maps.CustomOverlay({
       position: position,
       content: overlayContent,
-      yAnchor: 1.05 // 핀의 바로 윗 공간에 정렬되도록 오프셋 조절
+      yAnchor: 1.05
     });
 
     detailOverlay.setMap(map);
@@ -264,7 +263,6 @@ async function fetchLocations() {
   }
 }
 
-// 카테고리 누적 선택 토글 로직
 function toggleCategory(cat) {
   const next = new Set(activeCategories.value);
   if (next.has(cat)) {
@@ -276,14 +274,12 @@ function toggleCategory(cat) {
   renderMarkers(); 
 }
 
-// 🎯 [신규/수정] 고정밀 GPS 수신 및 맵에 내 위치 마커 추가 기능
 function moveToCurrentLocation() {
   if (navigator.geolocation) {
     loading.value = true;
     
-    // 정확도를 대폭 끌어올리기 위한 옵션 세팅
     const geoOptions = {
-      enableHighAccuracy: true, // 오차를 최소화하는 고정밀 측정 가동
+      enableHighAccuracy: true,
       timeout: 10000,
       maximumAge: 0
     };
@@ -291,30 +287,27 @@ function moveToCurrentLocation() {
     navigator.geolocation.getCurrentPosition(
       (position) => {
         loading.value = false;
-        const lat = position.coords.latitude;  // 위도
-        const lon = position.coords.longitude; // 경도
+        const lat = position.coords.latitude;
+        const lon = position.coords.longitude;
 
         const locPosition = new kakao.maps.LatLng(lat, lon);
 
         if (map) {
-          // 1. 기존에 이미 현재 위치 마커를 그린 적이 있다면 지도에서 먼저 지웁니다.
           if (myLocationMarker) {
             myLocationMarker.setMap(null);
           }
 
-          // 2. 내 위치 전용 귀여운 초록색 핀 마커 생성
           const markerContent = document.createElement('div');
           markerContent.style.cssText = `
             width: 20px;
             height: 20px;
-            background-color: #2e7d32; /* 숲의 시그니처 초록색 현재위치 마커 */
+            background-color: #2e7d32;
             border: 3px solid #ffffff;
             border-radius: 50%;
             box-shadow: 0 0 10px rgba(46, 125, 50, 0.6);
             position: relative;
           `;
           
-          // 펄스 애니메이션용 원형 링
           const pulseRing = document.createElement('div');
           pulseRing.style.cssText = `
             position: absolute;
@@ -335,10 +328,9 @@ function moveToCurrentLocation() {
             yAnchor: 0.5
           });
 
-          // 3. 지도에 내 마커 얹고 화면 부드럽게 줌인
           myLocationMarker.setMap(map);
           map.panTo(locPosition);
-          map.setLevel(4, { animate: true }); // 가독성 좋은 4레벨로 확대
+          map.setLevel(4, { animate: true });
         }
       },
       (error) => {
@@ -393,7 +385,6 @@ watch(
       map.panTo(moveLatLon);
       map.setLevel(5); 
       
-      // 구를 바꿀 때 기존 내 위치 핀은 자연스럽게 유지하도록 보존합니다.
       await drawBoundaries();
       await fetchLocations();
       renderMarkers();
@@ -438,19 +429,11 @@ watch(
 </template>
 
 <style>
-/* 🎯 내 위치 마커의 펄스 퍼짐 애니메이션 정의 */
 @keyframes gpsPulse {
-  0% {
-    transform: scale(1);
-    opacity: 0.8;
-  }
-  100% {
-    transform: scale(2.8);
-    opacity: 0;
-  }
+  0% { transform: scale(1); opacity: 0.8; }
+  100% { transform: scale(2.8); opacity: 0; }
 }
 
-/* 🌿 카카오 오버레이 전용 스타일 (상위 scoped 스코프 제약을 해제하여 맵 내부에 안전하게 전파) */
 .kakaomap-popup {
   display: none;
   position: absolute;
@@ -472,17 +455,10 @@ watch(
 }
 
 @keyframes popupScale {
-  from {
-    opacity: 0;
-    transform: translateY(6px) scale(0.95);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
+  from { opacity: 0; transform: translateY(6px) scale(0.95); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
-/* 팝업 하단 말풍선 삼각 꼬리말 제작 */
 .popup-box::after {
   content: "";
   position: absolute;
@@ -498,21 +474,12 @@ watch(
 
 .popup-box .close-btn {
   position: absolute;
-  top: 8px;
-  right: 8px;
-  width: 22px;
-  height: 22px;
+  top: 8px; right: 8px; width: 22px; height: 22px;
   background: rgba(255, 255, 255, 0.85);
-  border-radius: 50%;
-  border: none;
-  font-size: 16px;
-  cursor: pointer;
-  color: #777;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 10;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+  border-radius: 50%; border: none; font-size: 16px;
+  cursor: pointer; color: #777;
+  display: flex; align-items: center; justify-content: center;
+  z-index: 10; box-shadow: 0 1px 4px rgba(0,0,0,0.1);
   transition: all 0.15s;
 }
 
@@ -521,213 +488,91 @@ watch(
   color: white;
 }
 
-.popup-img-wrap {
-  width: 100%;
-  height: 96px;
-  overflow: hidden;
-  background: #f3f5f3;
-}
-
-.popup-img-wrap img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.popup-body {
-  padding: 12px 14px 14px;
-  display: flex;
-  flex-direction: column;
-}
-
-.popup-cat {
-  font-size: 10px;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  margin-bottom: 3px;
-}
-
-.popup-title {
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--forest-900, #122116);
-  margin-bottom: 4px;
-  line-height: 1.35;
-}
-
-.popup-addr {
-  font-size: 11px;
-  color: var(--moss-400, #557b6b);
-  line-height: 1.4;
-  margin-bottom: 8px;
-}
-
-.popup-link {
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--forest-600, #25442a) !important;
-  text-decoration: none;
-  transition: transform 0.2s;
-}
-
-.popup-link:hover {
-  text-decoration: underline;
-  transform: translateX(1px);
-}
+.popup-img-wrap { width: 100%; height: 96px; overflow: hidden; background: #f3f5f3; }
+.popup-img-wrap img { width: 100%; height: 100%; object-fit: cover; }
+.popup-body { padding: 12px 14px 14px; display: flex; flex-direction: column; }
+.popup-cat { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 3px; }
+.popup-title { font-size: 13px; font-weight: 700; color: var(--forest-900, #122116); margin-bottom: 4px; line-height: 1.35; }
+.popup-addr { font-size: 11px; color: var(--moss-400, #557b6b); line-height: 1.4; margin-bottom: 8px; }
+.popup-link { font-size: 11px; font-weight: 700; color: var(--forest-600, #25442a) !important; text-decoration: none; transition: transform 0.2s; }
+.popup-link:hover { text-decoration: underline; transform: translateX(1px); }
 </style>
 
 <style scoped>
-.map-wrap {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-/* 🌿 [1번 레이아웃] 필터칩과 현재위치 버튼을 한 라인에 양끝으로 배치하는 컨테이너 */
-.map-header-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  width: 100%;
-}
-
-.legend {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  flex: 1;
-}
+.map-wrap { display: flex; flex-direction: column; gap: 16px; }
+.map-header-bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%; }
+.legend { display: flex; flex-wrap: wrap; gap: 8px; flex: 1; }
 
 .legend-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 16px;
-  border-radius: 999px;
-  border: 1.5px solid var(--line);
-  background: var(--surface);
-  font-size: var(--text-xs);
-  color: var(--forest-700);
-  transition: all 0.2s var(--ease-leaf);
-  cursor: pointer;
-  font-weight: 700;
+  display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px;
+  border-radius: 999px; border: 1.5px solid var(--line); background: var(--surface);
+  font-size: var(--text-xs); color: var(--forest-700);
+  transition: all 0.2s var(--ease-leaf); cursor: pointer; font-weight: 700;
 }
 
-/* 🌿 비활성화 상태의 모던한 그레이시-아웃 처리 */
 .legend-chip.inactive {
-  opacity: 0.55;
-  background: #f1f3f0; 
-  border-color: #dbe0da;
-  color: #8c968a;
+  opacity: 0.55; background: #f1f3f0; border-color: #dbe0da; color: #8c968a;
 }
 
-/* 🌿 선택 시 싱그러운 카테고리별 포인트 입체감 확보 */
 .legend-chip:not(.inactive) {
-  background-color: #f3f9f5;
-  border-color: var(--forest-600);
-  color: var(--forest-900);
-  box-shadow: 0 4px 10px rgba(37, 68, 42, 0.06);
-  transform: translateY(-1px);
+  background-color: #f3f9f5; border-color: var(--forest-600); color: var(--forest-900);
+  box-shadow: 0 4px 10px rgba(37, 68, 42, 0.06); transform: translateY(-1px);
 }
 
-.dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--dot);
-  display: inline-block;
+html[data-theme="dark"] .legend-chip:not(.inactive) {
+  background-color: var(--forest-600) !important; color: var(--surface) !important; border-color: var(--forest-600) !important;
 }
 
-.legend-chip.inactive .dot {
-  background: #9fa89d !important;
+html[data-theme="dark"] .legend-chip.inactive {
+  background: var(--surface-alt) !important; border-color: var(--line) !important; color: var(--text-muted) !important;
 }
 
-.map-area {
-  position: relative;
-}
+.dot { width: 8px; height: 8px; border-radius: 50%; background: var(--dot); display: inline-block; }
+.legend-chip.inactive .dot { background: #9fa89d !important; }
+.map-area { position: relative; }
 
 .current-gu-badge {
-  position: absolute;
-  top: 16px;
-  left: 16px;
-  z-index: 10;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 16px;
-  background-color: rgba(255, 255, 255, 0.94);
-  border: 1.5px solid var(--forest-600);
-  border-radius: 999px;
-  box-shadow: var(--shadow-lift);
-  pointer-events: none;
+  position: absolute; top: 16px; left: 16px; z-index: 10;
+  display: flex; align-items: center; gap: 6px; padding: 8px 16px;
+  background-color: rgba(255, 255, 255, 0.94); border: 1.5px solid var(--forest-600);
+  border-radius: 999px; box-shadow: var(--shadow-lift); pointer-events: none;
 }
 
-/* 🎯 [1번 디자인] 지도 '바깥'의 필터 라인 옆에 위치한 버튼 스타일 정의 */
+/* 🌙 [추가] 야간 모드일 때 구 이름 배지 스타일 보완 */
+html[data-theme="dark"] .current-gu-badge {
+  background-color: var(--surface) !important;
+  border-color: var(--line) !important;
+}
+html[data-theme="dark"] .gu-name {
+  color: var(--text-main) !important;
+}
+
 .current-location-btn-outer {
-  display: inline-flex;
-  align-items: center;
-  white-space: nowrap;
-  gap: 6px;
-  padding: 8px 16px;
-  background-color: var(--surface);
-  border: 1.5px solid var(--line);
-  border-radius: 999px;
-  box-shadow: var(--shadow-soft);
-  font-family: 'Cafe24Surround', var(--font-body);
-  font-size: 13px;
-  font-weight: 800;
-  color: var(--forest-700);
-  cursor: pointer;
+  display: inline-flex; align-items: center; white-space: nowrap; gap: 6px; padding: 8px 16px;
+  background-color: var(--surface); border: 1.5px solid var(--line); border-radius: 999px;
+  box-shadow: var(--shadow-soft); font-family: 'Cafe24Surround', var(--font-body);
+  font-size: 13px; font-weight: 800; color: var(--forest-700); cursor: pointer;
   transition: all 0.2s var(--ease-leaf);
 }
 
 .current-location-btn-outer:hover {
-  transform: translateY(-1px);
-  background-color: #f3f9f5;
-  border-color: var(--forest-600);
-  color: var(--forest-900);
+  transform: translateY(-1px); background-color: #f3f9f5; border-color: var(--forest-600); color: var(--forest-900);
   box-shadow: 0 4px 10px rgba(37, 68, 42, 0.06);
 }
 
-.current-location-btn-outer:active {
-  transform: translateY(0);
+html[data-theme="dark"] .current-location-btn-outer:hover {
+  background-color: var(--surface-alt) !important; color: var(--forest-600) !important;
 }
 
-.tree-icon, .gps-icon {
-  font-size: 15px;
-}
-
-.gu-name, .gps-text {
-  font-size: 13px;
-  font-weight: 800;
-}
-
-.kakao-map-el {
-  height: 440px;
-  width: 100%;
-  border-radius: var(--radius-lg);
-  border: 1.5px solid var(--line);
-  box-shadow: var(--shadow-soft);
-}
+.current-location-btn-outer:active { transform: translateY(0); }
+.tree-icon, .gps-icon { font-size: 15px; }
+.gu-name, .gps-text { font-size: 13px; font-weight: 800; }
+.kakao-map-el { height: 440px; width: 100%; border-radius: var(--radius-lg); border: 1.5px solid var(--line); box-shadow: var(--shadow-soft); }
 
 .status {
-  position: absolute;
-  top: 12px;
-  left: 12px;
-  background: var(--surface);
-  padding: 8px 14px;
-  border-radius: var(--radius-sm);
-  font-size: var(--text-sm);
-  box-shadow: var(--shadow-soft);
-  z-index: 20;
-  font-weight: 600;
-  color: var(--forest-700);
+  position: absolute; top: 12px; left: 12px; background: var(--surface); padding: 8px 14px;
+  border-radius: var(--radius-sm); font-size: var(--text-sm); box-shadow: var(--shadow-soft);
+  z-index: 20; font-weight: 600; color: var(--forest-700);
 }
-
-.status.error {
-  color: var(--danger);
-  border-left: 4px solid var(--danger);
-}
+.status.error { color: var(--danger); border-left: 4px solid var(--danger); }
 </style>

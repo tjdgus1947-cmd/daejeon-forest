@@ -1,3 +1,5 @@
+# DistrictSelectView.vue
+
 <script setup>
 import { useRouter } from "vue-router";
 import { DISTRICTS } from "../composables/districts";

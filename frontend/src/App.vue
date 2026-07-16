@@ -147,20 +147,49 @@ select {
   border-color: var(--line) !important;
 }
 
+/* ==========================================
+   🤖 챗봇(ChatWidget) 야간 모드 전용 정밀 스타일 보완
+   ========================================== */
+/* 1. 챗봇 본체 배경 및 메인 프레임 어둡게 전환 */
+html[data-theme="dark"] .chat-window,
+html[data-theme="dark"] div[class*="chat-window"],
+html[data-theme="dark"] .chat-container,
+html[data-theme="dark"] div[class*="chat-container"] {
+  background-color: var(--surface) !important;
+  background: var(--surface) !important;
+  border-color: var(--line) !important;
+}
+
+/* 2. 대화 내역이 쌓이는 스크롤 바디 및 하단 입력 필드 영역을 한 단계 더 어둡게 격리 */
+html[data-theme="dark"] .chat-body,
+html[data-theme="dark"] div[class*="chat-body"],
+html[data-theme="dark"] .chat-footer,
+html[data-theme="dark"] div[class*="chat-footer"] {
+  background-color: var(--bg) !important;
+  background: var(--bg) !important;
+}
+
+/* 3. 우측 하단 동그란 챗봇 토글 열기/닫기 버튼 야간 대응 */
+html[data-theme="dark"] button[class*="toggle"],
+html[data-theme="dark"] .chat-toggle-btn {
+  background-color: var(--surface) !important;
+  background: var(--surface) !important;
+  border: 1px solid var(--line) !important;
+}
+
 /* 💡 상단 헤더 스타일 (기존 상단 다크그린 띠와 일치하는 테마) */
 .global-header {
   display: flex;
   align-items: center;
-  justify-content: space-between; /* 양 끝 정렬로 변경 */
+  justify-content: space-between;
   padding: 14px 24px;
-  background-color: #1b351e !important; /* 상단바는 야간에도 감성 숲 다크그린 유지 */
+  background-color: #1b351e !important;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   position: sticky;
   top: 0;
   z-index: 999;
 }
 
-/* 로고 영역 스타일 */
 .logo-area {
   display: flex;
   align-items: center;
@@ -169,7 +198,6 @@ select {
   user-select: none;
 }
 
-/* 🌳 숲 로고 마우스 오버 애니메이션 */
 .forest-logo {
   font-size: 22px;
   transition: transform 0.2s ease-in-out;
@@ -179,17 +207,15 @@ select {
   transform: scale(1.2) rotate(5deg);
 }
 
-/* 로고 텍스트 */
 .logo-text {
   font-family: 'Cafe24Surround', 'Noto Serif KR', serif;
   font-weight: 700;
   font-size: 1.15rem;
-  color: #ffffff !important; /* 상단바 텍스트는 언제나 선명하게 흰색 고정 */
+  color: #ffffff !important;
   letter-spacing: -0.02em;
   text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.12);
 }
 
-/* 🌙 테마 토글 버튼 스타일 */
 .theme-toggle-btn {
   display: flex;
   align-items: center;
@@ -218,7 +244,6 @@ select {
   transform: rotate(15deg) scale(1.1);
 }
 
-/* 헤더 높이를 제외한 나머지 콘텐츠 높이 자동 연산 */
 .main-content {
   min-height: calc(100vh - 56px);
 }
