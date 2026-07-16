@@ -29,11 +29,11 @@ import psycopg2
 # DB 접속 정보 - 본인 환경에 맞게 수정하세요
 # ------------------------------------------------------------------
 DB_CONFIG = {
-    "host": "localhost",
+    "host": "dpg-d9c5mqbbc2fs73bbgehg-a.singapore-postgres.render.com",
     "port": 5432,
-    "dbname": "community_db",
-    "user": "postgres",
-    "password": "1234",
+    "dbname": "mydb_hq60",
+    "user": "dbuser",
+    "password": "8YockEZ12Kl81FGQc1OrgvmqSRBB0P7K",
 }
 
 # location 테이블 컬럼 (JSON 필드명과 동일)
