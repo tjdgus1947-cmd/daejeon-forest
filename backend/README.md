@@ -1,6 +1,6 @@
 # 모여라 대전의 숲 - Backend
 
-FastAPI + SQLite + SQLAlchemy 기반 백엔드
+FastAPI + PostgreSQL + SQLAlchemy 기반 백엔드
 
 ## 1. 설치
 
